@@ -15,7 +15,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 #veil{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
 .lid{position:absolute;left:0;right:0;height:50.5%;background:#000;transition:transform .5s ease-in-out}
 #lidT{top:0}#lidB{bottom:0}
-.txt{color:#fff;font-weight:800;-webkit-text-stroke:4px #000;paint-order:stroke fill;text-shadow:0 2px 6px #000;line-height:1.25}
+.txt{color:#fff;font-weight:800;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:0 2px 6px #000;line-height:1.25}
 #title{font-family:"Marck Script","Segoe Script","Brush Script MT",cursive;font-weight:400;-webkit-text-stroke:0;text-shadow:0 0 20px rgba(255,255,255,.45);font-size:58px;line-height:1.3;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:46px;opacity:0;transition:opacity 2s;white-space:pre-line;z-index:5;pointer-events:none}
 #lines{position:absolute;left:0;right:0;bottom:calc(5% + env(safe-area-inset-bottom,0px));padding:0 18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;z-index:5;pointer-events:none}
 .line{font-size:24px;opacity:0;max-height:220px;transition:opacity 1s,font-size .8s,max-height .7s,margin .7s}
@@ -28,7 +28,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 #center{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);padding:0 22px;text-align:center;font-size:26px;opacity:0;transition:opacity 1s;z-index:5;pointer-events:none}
 #ring{position:absolute;left:0;right:0;top:55%;text-align:center;font-size:30px;opacity:0;transition:opacity 1s,top 1s;z-index:5;pointer-events:none}
 #btns{position:absolute;left:0;right:0;top:55%;display:flex;gap:10px;z-index:7;padding:0 14px}
-#btns.end{justify-content:flex-end;padding:0 10px 0 0;top:67%}
+#btns.end{justify-content:flex-end;padding:0 10px 0 0;top:77%}
 #btns.center{justify-content:center}
 .btn{font:700 17px system-ui,sans-serif;color:#fff;background:rgba(20,20,20,.78);border:2px solid rgba(255,255,255,.85);padding:13px 22px;border-radius:14px;opacity:0;transition:opacity 1s}
 #btns.row .btn{flex:1;font-size:14px;padding:12px 8px}
@@ -100,20 +100,17 @@ async function say(text,cls=''){
   if(f){f.classList.remove('front');f.classList.add('back')}
   const el=document.createElement('div');
   el.className='line txt front '+cls;
-  const chars=[];
-  const words=text.split(' ');
-  words.forEach((w,i)=>{
-    const ws=document.createElement('span');
-    ws.style.cssText='display:inline-block;white-space:nowrap';
-    [...w].forEach(c=>{const x=document.createElement('span');x.className='ch';x.textContent=c;ws.appendChild(x);chars.push(x)});
-    el.appendChild(ws);
-    if(i<words.length-1)el.appendChild(document.createTextNode(' '));
-  });
+  // видимая часть + невидимый «хвост»: перенос строк сразу как в финале, ничего не прыгает
+  const vis=document.createElement('span'),hid=document.createElement('span');
+  hid.style.visibility='hidden';hid.style.webkitTextStroke='0';hid.style.textShadow='none';
+  el.append(vis,hid);
   box.appendChild(el);await raf();el.classList.add('show');
+  const ch=Array.from(text);
   let fast=false;skip=()=>{fast=true};
-  for(const x of chars){
-    x.classList.add('on');
-    if(!fast)await sleep(/[.,!?…:]/.test(x.textContent)?230:50);
+  for(let i=1;i<=ch.length;i++){
+    vis.textContent=ch.slice(0,i).join('');
+    hid.textContent=ch.slice(i).join('');
+    if(!fast&&i<ch.length)await sleep(/[.,!?…:]/.test(ch[i-1])?230:45);
   }
   await hold(900+text.length*22);
 }
