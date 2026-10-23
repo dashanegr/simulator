@@ -1,0 +1,241 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<title>Игра</title>
+<style>
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none}
+html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+#stage{position:relative;width:min(100vw,480px);height:100dvh;margin:0 auto;overflow:hidden;background:#000}
+.photo{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;opacity:0}
+#veil{position:absolute;inset:0;background:#000;opacity:0;pointer-events:none}
+.lid{position:absolute;left:0;right:0;height:50.5%;background:#000;transition:transform .5s ease-in-out}
+#lidT{top:0}#lidB{bottom:0}
+.txt{color:#fff;font-weight:800;-webkit-text-stroke:4px #000;paint-order:stroke fill;text-shadow:0 2px 6px #000;line-height:1.25}
+#title{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:46px;opacity:0;transition:opacity 2s;white-space:pre-line;z-index:5;pointer-events:none}
+#lines{position:absolute;left:0;right:0;bottom:calc(5% + env(safe-area-inset-bottom,0px));padding:0 18px;display:flex;flex-direction:column;gap:8px;z-index:5;pointer-events:none}
+.line{font-size:24px;opacity:0;max-height:220px;transition:opacity 1s,font-size .8s,max-height .7s,margin .7s}
+.line.show{opacity:1}
+.line.back{font-size:16px}
+.line.show.back{opacity:.5}
+.line.me{color:#5b9bd5}
+.line.gone{opacity:0!important;max-height:0;margin:-8px 0 0}
+#center{position:absolute;left:0;right:0;top:50%;transform:translateY(-50%);padding:0 22px;text-align:center;font-size:26px;opacity:0;transition:opacity 1s;z-index:5;pointer-events:none}
+#ring{position:absolute;left:0;right:0;top:55%;text-align:center;font-size:30px;opacity:0;transition:opacity 1s,top 1s;z-index:5;pointer-events:none}
+#btns{position:absolute;left:0;right:0;top:55%;display:flex;gap:10px;z-index:7;padding:0 14px}
+#btns.end{justify-content:flex-end;padding:0}
+#btns.center{justify-content:center}
+.btn{font:700 17px system-ui,sans-serif;color:#fff;background:rgba(20,20,20,.78);border:2px solid rgba(255,255,255,.85);padding:13px 22px;border-radius:14px;opacity:0;transition:opacity 1s}
+#btns.end .btn{border-right:0;border-radius:14px 0 0 14px}
+#btns.row .btn{flex:1;font-size:14px;padding:12px 8px}
+.btn.show{opacity:1}
+.btn:active{background:rgba(70,70,70,.9)}
+#list{position:absolute;left:18px;right:18px;top:26%;background:rgba(0,0,0,.72);border:1px solid rgba(255,255,255,.3);border-radius:16px;padding:16px;z-index:6;opacity:0;transition:opacity 1s;pointer-events:none}
+#list.show{opacity:1;pointer-events:auto}
+#list h3{margin:0 0 10px;color:#fff;font-size:19px}
+.item{display:flex;align-items:center;gap:12px;color:#fff;font-size:18px;padding:10px 0}
+.box{width:28px;height:28px;border:2px solid #fff;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px}
+#start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#666;font-size:16px;z-index:20;background:#000}
+</style>
+</head>
+<body>
+<div id="stage">
+  <img class="photo" id="pA" alt=""><img class="photo" id="pB" alt="">
+  <div id="veil"></div>
+  <div class="lid" id="lidT"></div><div class="lid" id="lidB"></div>
+  <div id="title" class="txt"></div>
+  <div id="ring" class="txt"></div>
+  <div id="center" class="txt"></div>
+  <div id="lines"></div>
+  <div id="list"><h3>Собрать вещи:</h3><div id="items"></div></div>
+  <div id="btns"></div>
+  <div id="start">Нажмите, чтобы начать</div>
+</div>
+<script>
+const $=id=>document.getElementById(id);
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
+const PHOTO_DIR=''; // папка с фото, например 'photos/' (если лежат рядом с index.html — оставь пустым)
+const PHOTO_COUNT=12; // когда добавишь новые фото — увеличь число
+for(let i=1;i<=PHOTO_COUNT;i++){new Image().src=PHOTO_DIR+'foto'+i+'.jpg'}
+
+/* ---------- фото ---------- */
+let cur=$('pA'),oth=$('pB');
+async function setPhoto(n,ms=0){
+  oth.src=PHOTO_DIR+'foto'+n+'.jpg';
+  oth.style.transition=cur.style.transition=ms?`opacity ${ms}ms`:'none';
+  oth.style.opacity=1;cur.style.opacity=0;
+  [cur,oth]=[oth,cur];
+  await sleep(ms);
+}
+/* ---------- веки и затемнение ---------- */
+async function lids(f,ms){
+  $('lidT').style.transition=$('lidB').style.transition=`transform ${ms}ms ease-in-out`;
+  $('lidT').style.transform=`translateY(${-f*100}%)`;
+  $('lidB').style.transform=`translateY(${f*100}%)`;
+  await sleep(ms);
+}
+async function fade(to,ms){$('veil').style.transition=`opacity ${ms}ms`;$('veil').style.opacity=to;await sleep(ms)}
+async function blinkOpen(){
+  await lids(.5,700);await sleep(300);
+  await lids(0,500);await sleep(500);
+  await lids(1,1100);
+}
+async function shortBlink(n){await lids(0,160);await setPhoto(n,0);await lids(1,220)}
+
+/* ---------- надписи-диалог ---------- */
+let skip=null;
+$('stage').addEventListener('pointerdown',()=>{if(skip)skip()});
+function hold(ms){return new Promise(res=>{const t=setTimeout(done,ms);const t0=Date.now();
+  function done(){clearTimeout(t);skip=null;res()}
+  skip=()=>{if(Date.now()-t0>500)done()}})}
+async function say(text,cls=''){
+  const box=$('lines');
+  const f=box.querySelector('.front'),b=box.querySelector('.back:not(.gone)');
+  if(b){b.classList.add('gone');setTimeout(()=>b.remove(),800)}
+  if(f){f.classList.remove('front');f.classList.add('back')}
+  const el=document.createElement('div');
+  el.className='line txt front '+cls;el.textContent=text;
+  box.appendChild(el);await raf();el.classList.add('show');
+  await hold(1800+text.length*45);
+}
+async function clearLines(){
+  const els=[...$('lines').children];
+  els.forEach(e=>e.classList.add('gone'));
+  await sleep(900);els.forEach(e=>e.remove());
+}
+async function centerText(t,ms=3500){
+  const c=$('center');c.textContent=t;c.style.opacity=1;await sleep(ms);c.style.opacity=0;await sleep(1000);
+}
+
+/* ---------- кнопки ---------- */
+// align: 'end' (прижата вправо), 'center', 'row' (несколько в ряд)
+function ask(labels,align='end'){
+  return new Promise(async res=>{
+    const w=$('btns');w.className=align;w.innerHTML='';
+    const bs=labels.map((l,i)=>{
+      const b=document.createElement('button');b.className='btn';b.textContent=l;
+      b.addEventListener('pointerdown',e=>e.stopPropagation());
+      b.addEventListener('click',async()=>{
+        bs.forEach(x=>x.classList.remove('show'));await sleep(500);w.innerHTML='';res(i)});
+      w.appendChild(b);return b});
+    await raf();bs.forEach(b=>b.classList.add('show'));
+  });
+}
+
+/* ---------- сцена-шаблон ---------- */
+async function scene(n,lines){
+  await setPhoto(n,0);
+  await fade(0,2500);
+  for(const [t,c] of lines)await say(t,c);
+  await fade(1,2500);
+  await clearLines();
+  await ask(['Далее']);
+}
+
+/* ---------- ИГРА ---------- */
+async function play(){
+  await setPhoto(1,0); // фото 1 спрятано под закрытыми веками
+  await sleep(1200);
+  const T=$('title');T.className='txt';T.textContent='Акт 1:\nНачало';
+  T.style.opacity=1;await sleep(4000);T.style.opacity=0;await sleep(2500);
+
+  await say('— Гоша, ты опять напился?!');
+  await say('— Да не пил я!');
+  await say('— А ну дыхни.');
+  await say('— Ой смотри, что это?');
+  await say('— Что?');
+  await blinkOpen();
+  await say('— Да это же ребенок!');
+  await say('— Привет сахарок☺️');
+  await shortBlink(2);
+  await say('— А сахарок то подгорелый😏');
+  await say('— Да помолчи ты!');
+  await fade(1,3000);await clearLines();
+  await ask(['Далее']);
+
+  await scene(3,[
+    ['— С днем рождения! Это Олег, хорошо ухаживай за ним.'],
+    ['— укх бу юа бы эт'],
+    ['— Что ты делаешь?'],
+    ['— Перевожу это на ее язык чтоб ей было понятней.'],
+    ['— *вздох разочарования в идиоте*']]);
+
+  await scene(4,[
+    ['— Поздравляю с 10 летием уголек! Рости большой чтоб легко доставать до самых высоких пальм с кокосами!'],
+    ['— Не слушай папу солнышко, у этой пьяни все мозги уже пропиты.']]);
+
+  await setPhoto(5,0);await fade(0,2500);
+  await say('— С 15 летием Дашулепулешушечучечка! Ты уже такая большая😢. Держи подарок, скоро торт начнем резать!');
+  await ask(['Далее']);
+  await clearLines();
+  await setPhoto(6,2000);
+  await say('— Спасибо, я отнесу его в комнату?','me');
+  await say('— Да, конечно.');
+  await ask(['Далее']);
+  await clearLines();
+  await fade(1,1500);await setPhoto(7,0);await fade(0,1500);
+  await ask(['Зайти']);
+  await setPhoto(8,2000);
+
+  // звонок
+  const R=$('ring');R.textContent='*звонок*';R.style.opacity=1;
+  await sleep(1300);
+  R.style.top='46%';
+  await ask(['взять трубку'],'center');
+  R.style.opacity=0;
+  await setPhoto(9,300);
+  await say('— Дарья Дмитриевна.');
+  await say('— Да, а вы кто?','me');
+  await say('— Машина ждет вас внизу.');
+  await say('— Меня? Зачем?','me');
+  await say('— Без вопросов, просто садитесь.');
+  await clearLines();
+  await setPhoto(10,800);
+
+  // выбор
+  let opts=['Собрать вещи и спуститься вниз','Что за машина? Куда спускаться? Я ни куда не поеду, я дура что ли?!'];
+  while(true){
+    const i=await ask(opts,opts.length>1?'row':'center');
+    if(i===0)break;
+    await centerText('Так дура не ломай весь сюжет! А ну быстро собрала свои пожитки и села в машину!');
+    opts=[opts[0]];
+  }
+
+  // сбор вещей
+  const things=['часы','рюкзак','горшочек с хлопком (на всякий случай)','мотыга (ну вдруг пригодится)','новую одежду'];
+  const L=$('list'),I=$('items');I.innerHTML='';
+  let left=things.length;
+  const done=new Promise(res=>{
+    things.forEach((t,k)=>{
+      const d=document.createElement('div');d.className='item';
+      d.innerHTML=`<div class="box"></div><div>${k+1}) ${t}</div>`;
+      let on=false;
+      d.addEventListener('pointerdown',e=>e.stopPropagation());
+      d.addEventListener('click',()=>{
+        if(on)return;on=true;d.firstChild.textContent='✓';
+        if(--left===0)res()});
+      I.appendChild(d);
+    });
+  });
+  L.classList.add('show');
+  await done;await sleep(400);
+  await ask(['Далее']);
+  L.classList.remove('show');await sleep(1000);
+
+  await setPhoto(11,1500);
+  await ask(['спуститься вниз'],'center');
+  await fade(1,1500);await setPhoto(12,0);await fade(0,1800);
+  await ask(['сесть в машину'],'center');
+  // ПРОДОЛЖЕНИЕ СЛЕДУЕТ — сюда добавим следующие сцены
+}
+
+$('start').addEventListener('click',()=>{$('start').remove();
+  // 1) закрыть веки до начала (экран чёрный)
+  $('lidT').style.transition=$('lidB').style.transition='none';
+  play();
+},{once:true});
+</script>
+</body>
+</html>
