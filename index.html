@@ -17,11 +17,11 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 #lidT{top:0}#lidB{bottom:0}
 .txt{color:#fff;font-weight:800;-webkit-text-stroke:3px #000;paint-order:stroke fill;text-shadow:0 2px 6px #000;line-height:1.25}
 #title{font-family:"Marck Script","Segoe Script","Brush Script MT",cursive;font-weight:400;-webkit-text-stroke:0;text-shadow:0 0 20px rgba(255,255,255,.45);font-size:58px;line-height:1.3;position:absolute;inset:0;display:flex;align-items:center;justify-content:center;text-align:center;font-size:46px;opacity:0;transition:opacity 2s;white-space:pre-line;z-index:5;pointer-events:none}
-#lines{position:absolute;left:0;right:0;bottom:calc(5% + env(safe-area-inset-bottom,0px));padding:0 18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;z-index:5;pointer-events:none}
-.line{font-size:24px;opacity:0;max-height:220px;transition:opacity 1s,font-size .8s,max-height .7s,margin .7s}
+#lines{position:absolute;left:0;right:0;bottom:calc(9% + env(safe-area-inset-bottom,0px));padding:0 18px;display:flex;flex-direction:column;align-items:center;text-align:center;gap:8px;z-index:5;pointer-events:none}
+.line{font-size:24px;opacity:0;max-height:220px;transform-origin:center bottom;transition:opacity 1s,transform .8s,max-height .7s,margin .7s}
 .ch{opacity:0;transition:opacity .3s}.ch.on{opacity:1}
 .line.show{opacity:1}
-.line.back{font-size:16px}
+.line.back{transform:scale(.67)}
 .line.show.back{opacity:.5}
 .line.me{color:#5b9bd5}
 .line.gone{opacity:0!important;max-height:0;margin:-8px 0 0}
@@ -61,8 +61,7 @@ body.pv #exitpv{display:block}
 .addrow{display:flex;gap:6px;margin:10px 0}.addrow select{flex:1}
 #editor .add{background:#245;border-color:#58a}#editor .del{background:#411;border-color:#a55;margin-top:6px}
 #clock{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:14px;font-size:20px;-webkit-text-stroke:3px #000;z-index:6;opacity:0;transition:opacity .6s;pointer-events:none}
-#notice{position:absolute;left:50%;top:9%;transform:translateX(-50%);width:max-content;max-width:88%;text-align:center;font-size:17px;font-weight:600;-webkit-text-stroke:0;padding:9px 24px;border:2px solid #fff;border-radius:999px;background:rgba(0,0,0,.72);opacity:0;transition:opacity .5s;z-index:8;pointer-events:none}
-#invbtn{display:none;position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:9;font:700 15px system-ui,sans-serif;color:#fff;background:rgba(20,20,20,.78);border:2px solid rgba(255,255,255,.85);border-radius:14px;padding:8px 12px}
+#invbtn{display:none;position:absolute;bottom:calc(10px + env(safe-area-inset-bottom,0px));right:10px;z-index:9;font:700 15px system-ui,sans-serif;color:#fff;background:rgba(20,20,20,.78);border:2px solid rgba(255,255,255,.85);border-radius:14px;padding:8px 12px}
 #invp{display:none;position:absolute;left:18px;right:18px;top:16%;z-index:12;background:rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.4);border-radius:16px;padding:16px;color:#fff}
 #invp h3{margin:0 0 8px;font-size:20px}.iv{padding:9px 0;font-size:17px;border-bottom:1px solid rgba(255,255,255,.15)}
 #invx{margin-top:12px;font:700 15px system-ui;color:#fff;background:#222;border:1px solid #888;border-radius:10px;padding:9px 16px}
@@ -71,6 +70,9 @@ body.pv #exitpv{display:block}
 #invd{display:none;position:absolute;left:12px;right:12px;top:8%;max-height:84%;overflow:auto;z-index:14;background:rgba(0,0,0,.95);border:1px solid #888;border-radius:16px;padding:14px;color:#fff;text-align:center}
 #invd img{max-width:100%;max-height:45vh;border-radius:12px}#invd p{font-size:16px;line-height:1.35}
 #invd .row{display:flex;gap:10px;justify-content:center;margin-top:10px}#invd button{font:700 15px system-ui;color:#fff;background:#222;border:1px solid #888;border-radius:10px;padding:10px 16px}
+#notices{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 200px);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:8;pointer-events:none}
+.nt{font-size:13px;font-weight:600;color:#fff;padding:6px 16px;border:1.5px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(0,0,0,.6);opacity:0;transition:opacity .5s}
+.nt.show{opacity:.8}
 </style>
 </head>
 <body>
@@ -84,7 +86,7 @@ body.pv #exitpv{display:block}
   <div id="lines"></div>
   <div id="list"><h3>Собрать вещи:</h3><div id="items"></div></div>
   <div id="btns"></div>
-  <div id="clock" class="txt"></div><div id="notice" class="txt"></div>
+  <div id="clock" class="txt"></div><div id="notices"></div>
   <button id="invbtn">🎒 Инвентарь</button>
   <div id="invd"></div>
   <div id="invp"><h3>Инвентарь</h3><div id="invl"></div><button id="invx">Закрыть</button></div>
@@ -263,8 +265,9 @@ function applyInv(s){
 }
 function showClock(t){clockText=t||'';const c=$('clock');c.textContent=clockText;c.style.opacity=clockText?1:0}
 async function notice(t,wait=true){
-  const n=$('notice');n.textContent=t;n.style.opacity=1;
-  const p=sleep(2600).then(()=>{n.style.opacity=0});
+  const e=document.createElement('div');e.className='nt';e.textContent=t;
+  $('notices').appendChild(e);await raf();e.classList.add('show');
+  const p=sleep(2600).then(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),600)});
   if(wait)await p;
 }
 
@@ -337,7 +340,7 @@ function resetStage(){
   $('lines').innerHTML='';$('btns').innerHTML='';
   ['title','ring','center'].forEach(i=>$(i).style.opacity=0);
   $('list').classList.remove('show');
-  inv=[];act=[];invOn=false;$('invp').style.display='none';$('invd').style.display='none';$('notice').style.opacity=0;showClock('');updInv();
+  inv=[];act=[];invOn=false;$('invp').style.display='none';$('invd').style.display='none';$('notices').innerHTML='';showClock('');updInv();
 }
 async function startGame(from=0){
   const id=++runId;resetStage();
