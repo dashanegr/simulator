@@ -289,6 +289,10 @@
    "align": "center"
   },
   {
+   "type": "veil",
+   "to": "1"
+  },
+  {
    "type": "title",
    "text": "Акт 2:\nЗнакомство"
   },
