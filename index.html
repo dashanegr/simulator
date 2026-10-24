@@ -44,7 +44,7 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 body.edit:not(.pv) #editor{display:block}
 body.edit:not(.pv) #stage{display:none}
 body.pv #exitpv{display:block}
-#exitpv{position:absolute;top:8px;left:8px;z-index:30;opacity:.6;background:#000;color:#fff;border:1px solid #888;border-radius:10px;padding:8px 12px;font-size:14px}
+#exitpv{position:absolute;top:8px;left:50%;transform:translateX(-50%);z-index:30;opacity:.6;background:#000;color:#fff;border:1px solid #888;border-radius:10px;padding:8px 12px;font-size:14px}
 #editor{position:fixed;inset:0;overflow:auto;background:#141414;color:#eee;font:15px system-ui,sans-serif;user-select:text}
 #editor *{user-select:text}
 #editor .wrap{max-width:520px;margin:0 auto;padding:0 12px 60px}
@@ -60,6 +60,17 @@ body.pv #exitpv{display:block}
 .nest{margin-left:6px;border-left:3px solid #4a6;padding-left:8px}.sub{font-size:12px;color:#aaa;margin-top:6px}
 .addrow{display:flex;gap:6px;margin:10px 0}.addrow select{flex:1}
 #editor .add{background:#245;border-color:#58a}#editor .del{background:#411;border-color:#a55;margin-top:6px}
+#clock{position:absolute;top:calc(10px + env(safe-area-inset-top,0px));right:14px;font-size:20px;-webkit-text-stroke:3px #000;z-index:6;opacity:0;transition:opacity .6s;pointer-events:none}
+#notice{position:absolute;left:50%;top:9%;transform:translateX(-50%);width:max-content;max-width:88%;text-align:center;font-size:17px;font-weight:600;-webkit-text-stroke:0;padding:9px 24px;border:2px solid #fff;border-radius:999px;background:rgba(0,0,0,.72);opacity:0;transition:opacity .5s;z-index:8;pointer-events:none}
+#invbtn{display:none;position:absolute;top:calc(10px + env(safe-area-inset-top,0px));left:10px;z-index:9;font:700 15px system-ui,sans-serif;color:#fff;background:rgba(20,20,20,.78);border:2px solid rgba(255,255,255,.85);border-radius:14px;padding:8px 12px}
+#invp{display:none;position:absolute;left:18px;right:18px;top:16%;z-index:12;background:rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.4);border-radius:16px;padding:16px;color:#fff}
+#invp h3{margin:0 0 8px;font-size:20px}.iv{padding:9px 0;font-size:17px;border-bottom:1px solid rgba(255,255,255,.15)}
+#invx{margin-top:12px;font:700 15px system-ui;color:#fff;background:#222;border:1px solid #888;border-radius:10px;padding:9px 16px}
+#invl{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.tile{text-align:center;font-size:13px}
+.th{aspect-ratio:1;border:2px solid #fff;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:34px;background:#111;margin-bottom:4px}.th img{width:100%;height:100%;object-fit:cover}
+#invd{display:none;position:absolute;left:12px;right:12px;top:8%;max-height:84%;overflow:auto;z-index:14;background:rgba(0,0,0,.95);border:1px solid #888;border-radius:16px;padding:14px;color:#fff;text-align:center}
+#invd img{max-width:100%;max-height:45vh;border-radius:12px}#invd p{font-size:16px;line-height:1.35}
+#invd .row{display:flex;gap:10px;justify-content:center;margin-top:10px}#invd button{font:700 15px system-ui;color:#fff;background:#222;border:1px solid #888;border-radius:10px;padding:10px 16px}
 </style>
 </head>
 <body>
@@ -73,6 +84,10 @@ body.pv #exitpv{display:block}
   <div id="lines"></div>
   <div id="list"><h3>Собрать вещи:</h3><div id="items"></div></div>
   <div id="btns"></div>
+  <div id="clock" class="txt"></div><div id="notice" class="txt"></div>
+  <button id="invbtn">🎒 Инвентарь</button>
+  <div id="invd"></div>
+  <div id="invp"><h3>Инвентарь</h3><div id="invl"></div><button id="invx">Закрыть</button></div>
   <button id="exitpv">← Редактор</button>
   <div id="start">Нажмите, чтобы начать</div>
 </div>
@@ -198,6 +213,61 @@ const DEFAULT={steps:[
  P(11,'fade'),B('Спуститься вниз','center'),P(12,'fadeblack'),B('Сесть в машину','center')
 ]};
 
+/* ---------- ИНВЕНТАРЬ, ВРЕМЯ, НАДПИСИ В ОВАЛЕ ---------- */
+let inv=[],act=[],invOn=false,clockText='';
+const invFind=n=>inv.findIndex(x=>x.name.toLowerCase().includes(n.trim().toLowerCase()));
+const isAct=n=>act.some(a=>a.toLowerCase().includes(n.trim().toLowerCase()));
+const invAdd=n=>{if(!inv.some(x=>x.name.toLowerCase()===n.toLowerCase()))inv.push({name:n})};
+function updInv(){
+  $('invbtn').style.display=invOn?'block':'none';
+  const l=$('invl');l.innerHTML='';
+  if(!inv.length){l.textContent='Пусто';return}
+  inv.forEach(x=>{
+    const d=document.createElement('div');d.className='tile';
+    const th=document.createElement('div');th.className='th';
+    if(x.photo){const im=document.createElement('img');im.src=PHOTO_DIR+x.photo;im.onerror=()=>{im.remove();th.textContent='📦'};th.append(im)}else th.textContent='📦';
+    const nm=document.createElement('div');nm.textContent=x.name;
+    d.append(th,nm);d.onclick=()=>openItem(x);l.append(d)});
+}
+function openItem(x){
+  const d=$('invd');d.innerHTML='';
+  if(x.photo){const im=document.createElement('img');im.src=PHOTO_DIR+x.photo;im.onerror=()=>im.remove();d.append(im)}
+  const t=document.createElement('h3');t.textContent=x.name;d.append(t);
+  if(x.desc){const p=document.createElement('p');p.textContent=x.desc;d.append(p)}
+  const row=document.createElement('div');row.className='row';
+  if(x.can){const a=document.createElement('button');a.textContent='Активировать';a.onclick=()=>activateItem(x);row.append(a)}
+  const b=document.createElement('button');b.textContent='Назад';b.onclick=()=>{d.style.display='none'};row.append(b);
+  d.append(row);d.style.display='block';
+}
+function activateItem(x,silent){
+  const i=inv.indexOf(x);if(i>=0)inv.splice(i,1);
+  act.push(x.name);
+  $('invd').style.display='none';$('invp').style.display='none';updInv();
+  if(x.actText&&!silent)notice(x.actText,false);
+}
+function applyInv(s){
+  const n=(s.name||'').trim();if(!n)return;
+  const i=invFind(n);
+  if(s.action==='remove'){if(i>=0)inv.splice(i,1)}
+  else if(s.action==='activate'){if(i>=0)activateItem(inv[i],true);else act.push(n)}
+  else if(s.action==='deactivate'){act=act.filter(a=>!a.toLowerCase().includes(n.toLowerCase()))}
+  else{
+    let it=i>=0?inv[i]:null;
+    if(!it){it={name:n[0].toUpperCase()+n.slice(1)};inv.push(it)}
+    if(s.photo)it.photo=s.photo.trim();
+    if(s.desc)it.desc=s.desc;
+    if(s.can==='1')it.can=true;
+    if(s.actText)it.actText=s.actText;
+    invOn=true}
+  updInv();
+}
+function showClock(t){clockText=t||'';const c=$('clock');c.textContent=clockText;c.style.opacity=clockText?1:0}
+async function notice(t,wait=true){
+  const n=$('notice');n.textContent=t;n.style.opacity=1;
+  const p=sleep(2600).then(()=>{n.style.opacity=0});
+  if(wait)await p;
+}
+
 /* ---------- ИНТЕРПРЕТАТОР ---------- */
 let story=null,runId=0;
 const CHK=id=>{if(id!==runId)throw 'abort'};
@@ -238,8 +308,15 @@ async function doStep(s,id){
         d.addEventListener('pointerdown',e=>e.stopPropagation());
         d.addEventListener('click',()=>{if(on)return;on=true;d.firstChild.textContent='✓';if(--left===0)res()});
         I.appendChild(d)})});
-    $('list').classList.add('show');await done;await sleep(400);
+    $('list').classList.add('show');await done;await sleep(400);its.forEach(invAdd);invOn=true;updInv();
     await ask([s.label||'Далее']);$('list').classList.remove('show');await sleep(1000);break}
+  case 'clock':showClock(s.text);break;
+  case 'inv':applyInv(s);if(s.text)await notice(s.text,s.wait!=='0');break;
+  case 'notice':await notice(s.text||'',s.wait!=='0');break;
+  case 'if':{
+    const n=(s.name||'').trim(),a=isAct(n),hv=invFind(n)>=0;
+    const ok=s.cond==='notactive'?!a:s.cond==='have'?hv:a;
+    await runSteps((ok?s.then:s.else)||[],id);break}
   case 'choice':{
     const o=s.options||[];let idx=o.map((_,i)=>i);
     while(idx.length){
@@ -260,10 +337,13 @@ function resetStage(){
   $('lines').innerHTML='';$('btns').innerHTML='';
   ['title','ring','center'].forEach(i=>$(i).style.opacity=0);
   $('list').classList.remove('show');
+  inv=[];act=[];invOn=false;$('invp').style.display='none';$('invd').style.display='none';$('notice').style.opacity=0;showClock('');updInv();
 }
 async function startGame(from=0){
   const id=++runId;resetStage();
   const steps=story.steps,prev=steps.slice(0,from);
+  for(const x of prev){if(x.type==='checklist'){(x.items||[]).forEach(invAdd);invOn=true}else if(x.type==='inv')applyInv(x);else if(x.type==='clock')clockText=x.text||''}
+  updInv();showClock(clockText);
   const lp=[...prev].reverse().find(x=>x.type==='photo');
   if(lp)await setPhoto(+lp.n,0);
   if(prev.some(x=>x.type==='blink'||(x.type==='photo'&&x.fx!=='hidden')))await lids(1,0);
@@ -293,6 +373,10 @@ const TYPES={
  button:{name:'🔘 Кнопка',f:[['label','Надпись','text'],['align','Где','sel',AL]],d:()=>B()},
  call:{name:'📞 Звонок',f:[['text','Надпись','text'],['label','Кнопка','text']],d:()=>({type:'call',text:'*звонок*',label:'Взять трубку'})},
  checklist:{name:'☑️ Список вещей',f:[['title','Заголовок','text'],['items','Пункты (каждый с новой строки)','lines'],['label','Кнопка','text']],d:()=>({type:'checklist',title:'',items:[],label:'Далее'})},
+ clock:{name:'🕒 Время в углу',f:[['text','Что показывать (например 14:30). Пусто — спрятать','text']],d:()=>({type:'clock',text:''})},
+ inv:{name:'🎒 Инвентарь',f:[['action','Действие','sel',[['add','Добавить предмет / задать его данные'],['activate','Активировать (предмет исчезнет из инвентаря)'],['deactivate','Сделать неактивированным'],['remove','Убрать предмет']]],['name','Название предмета (например: часы)','text'],['photo','Файл фото предмета (например: chasy.jpg)','text'],['desc','Описание при рассматривании','area'],['can','Кнопка «Активировать» в просмотре','sel',[['','Без кнопки'],['1','Есть кнопка']]],['actText','Надпись в овале, когда игрок нажмёт «Активировать»','text'],['text','Надпись в овале на этом шаге (например: Часы добавлены в инвентарь)','text'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'inv',action:'add',name:'',photo:'',desc:'',can:'',actText:'',text:'',wait:'1'})},
+ if:{name:'❓ Если предмет…',f:[['name','Название предмета (например: часы)','text'],['cond','Условие','sel',[['active','Предмет активирован'],['notactive','Предмет НЕ активирован'],['have','Предмет сейчас в инвентаре']]]],d:()=>({type:'if',name:'',cond:'active',then:[],else:[]})},
+ notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
  choice:{name:'🔀 Выбор',f:[],d:()=>({type:'choice',options:[{label:'',back:'',steps:[]},{label:'',back:'',steps:[]}]})}
 };
 const eSt=t=>$('eSt').textContent=t;
@@ -328,6 +412,7 @@ function renderList(steps,parent,top){
         ob.append(del);c.append(ob)});
       const add=h('button','add','+ Ещё вариант');add.onclick=()=>{s.options.push({label:'',back:'',steps:[]});changed();redraw()};c.append(add);
     }
+    if(s.type==='if'){[['then','Тогда:'],['else','Иначе (необязательно):']].forEach(([k,l])=>{s[k]=s[k]||[];c.append(h('div','sub',l));const n=h('div','nest');renderList(s[k],n,false);c.append(n)})}
     parent.append(c);
   });
   const row=h('div','addrow'),sel=h('select');
@@ -366,6 +451,9 @@ async function initEditor(){
   $('eR').onclick=async()=>{if(confirm('Отбросить черновик и загрузить версию с сайта?')){localStorage.removeItem('draft');story=await loadStory();redraw();eSt('Загружена версия с сайта.')}};
   $('exitpv').onclick=()=>{runId++;resetStage();document.body.className='edit'};
 }
+$('invbtn').onclick=()=>{$('invp').style.display=$('invp').style.display==='block'?'none':'block'};
+$('invx').onclick=()=>{$('invp').style.display='none'};
+['invbtn','invp','invd'].forEach(i=>$(i).addEventListener('pointerdown',e=>e.stopPropagation()));
 const storyP=loadStory();
 if(/[?&]edit/.test(location.search)){$('start').remove();document.body.className='edit';initEditor()}
 else $('start').addEventListener('click',async()=>{$('start').remove();story=await storyP;preload(story.steps);startGame(0)},{once:true});
