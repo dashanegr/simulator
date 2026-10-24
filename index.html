@@ -40,6 +40,26 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 .item{display:flex;align-items:center;gap:12px;color:#fff;font-size:18px;padding:10px 0}
 .box{width:28px;height:28px;border:2px solid #fff;border-radius:6px;flex:none;display:flex;align-items:center;justify-content:center;font-size:20px}
 #start{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:#666;font-size:16px;z-index:20;background:#000}
+#editor,#exitpv{display:none}
+body.edit:not(.pv) #editor{display:block}
+body.edit:not(.pv) #stage{display:none}
+body.pv #exitpv{display:block}
+#exitpv{position:absolute;top:8px;left:8px;z-index:30;opacity:.6;background:#000;color:#fff;border:1px solid #888;border-radius:10px;padding:8px 12px;font-size:14px}
+#editor{position:fixed;inset:0;overflow:auto;background:#141414;color:#eee;font:15px system-ui,sans-serif;user-select:text}
+#editor *{user-select:text}
+#editor .wrap{max-width:520px;margin:0 auto;padding:0 12px 60px}
+#editor .top{position:sticky;top:0;background:#141414;padding:10px 0;display:flex;gap:6px;flex-wrap:wrap;z-index:2}
+#editor button,#editor select{background:#2a2a2a;color:#fff;border:1px solid #555;border-radius:8px;padding:9px 10px;font-size:14px}
+#eSt{font-size:13px;color:#9c9;margin:4px 0 10px}
+.card{background:#1e1e1e;border:1px solid #3a3a3a;border-radius:12px;padding:10px;margin:10px 0}
+.bar{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
+.ctr button{padding:6px 10px;margin-left:4px}
+.fld{display:block;margin:8px 0}.fld span{display:block;font-size:12px;color:#aaa;margin-bottom:3px}
+.fld input,.fld textarea,.fld select{width:100%;background:#111;color:#fff;border:1px solid #555;border-radius:8px;padding:9px;font:15px system-ui}
+.opt{border:1px dashed #666;border-radius:10px;padding:8px;margin:10px 0}
+.nest{margin-left:6px;border-left:3px solid #4a6;padding-left:8px}.sub{font-size:12px;color:#aaa;margin-top:6px}
+.addrow{display:flex;gap:6px;margin:10px 0}.addrow select{flex:1}
+#editor .add{background:#245;border-color:#58a}#editor .del{background:#411;border-color:#a55;margin-top:6px}
 </style>
 </head>
 <body>
@@ -53,8 +73,10 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
   <div id="lines"></div>
   <div id="list"><h3>Собрать вещи:</h3><div id="items"></div></div>
   <div id="btns"></div>
+  <button id="exitpv">← Редактор</button>
   <div id="start">Нажмите, чтобы начать</div>
 </div>
+<div id="editor"><div class="wrap"><div class="top"><button id="eP">▶ С начала</button><button id="eS">💾 Сохранить для всех</button><button id="eD">⬇ Файл</button><button id="eR">↺ Сброс</button></div><div id="eSt"></div><div id="eL"></div></div></div>
 <script>
 const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
@@ -73,7 +95,8 @@ async function setPhoto(n,ms=0){
   await sleep(ms);
 }
 /* ---------- веки и затемнение ---------- */
-async function lids(f,ms){
+let lidsOpen=false;
+async function lids(f,ms){lidsOpen=f>=1;
   $('lidT').style.transition=$('lidB').style.transition=`transform ${ms}ms ease-in-out`;
   $('lidT').style.transform=`translateY(${-f*100}%)`;
   $('lidB').style.transform=`translateY(${f*100}%)`;
@@ -93,7 +116,8 @@ $('stage').addEventListener('pointerdown',()=>{if(skip)skip()});
 function hold(ms){return new Promise(res=>{const t=setTimeout(done,ms);const t0=Date.now();
   function done(){clearTimeout(t);skip=null;res()}
   skip=()=>{if(Date.now()-t0>500)done()}})}
-async function say(text,cls=''){
+async function say(text,cls='',audio){
+  if(audio){try{new Audio(audio).play().catch(()=>{})}catch(e){}}
   const box=$('lines');
   const f=box.querySelector('.front'),b=box.querySelector('.back:not(.gone)');
   if(b){b.classList.add('gone');setTimeout(()=>b.remove(),800)}
@@ -148,108 +172,203 @@ async function scene(n,lines){
   await ask(['Далее']);
 }
 
-/* ---------- ИГРА ---------- */
-async function play(){
-  await setPhoto(1,0); // фото 1 спрятано под закрытыми веками
-  await sleep(1200);
-  const T=$('title');T.className='txt';T.textContent='Акт 1:\nНачало';
-  T.style.opacity=1;await sleep(4000);T.style.opacity=0;await sleep(2500);
+/* ---------- СЮЖЕТ (по умолчанию; потом берётся из story.json) ---------- */
+const S=(text,who)=>({type:'say',text,who:who||'npc'});
+const V=to=>({type:'veil',to:String(to)});
+const B=(label,align)=>({type:'button',label:label||'Далее',align:align||'end'});
+const P=(n,fx)=>({type:'photo',n:String(n),fx});
+const DEFAULT={steps:[
+ {type:'title',text:'Акт 1:\nНачало'},P(1,'hidden'),
+ S('— Гоша, ты опять напился?!'),S('— Да не пил я!'),S('— А ну дыхни.'),S('— Ой, смотри, что это?'),S('— Что?'),
+ {type:'blink'},
+ S('— Да это же ребёнок!'),S('— Привет, сахарок ☺️'),P(2,'shortblink'),
+ S('— А сахарок-то подгоревший 😏'),S('— Да помолчи ты!'),V(1),B(),
+ P(3,'cut'),V(0),S('— С днём рождения! Это Олег, хорошо ухаживай за ним.'),S('— Укх бу юа бы эт'),S('— Что ты делаешь?'),S('— Перевожу это на её язык, чтобы ей было понятнее.'),S('— *вздох разочарования в идиоте*'),V(1),B(),
+ P(4,'cut'),V(0),S('— Поздравляю с 10-летием, уголёк! Расти большой, чтобы легко доставать до самых высоких пальм с кокосами!'),S('— Не слушай папу, солнышко, у этой пьяни все мозги уже пропиты.'),V(1),B(),
+ P(5,'cut'),V(0),S('— С 15-летием, Дашулепулешушечучечка! Ты уже такая большая 😢 Держи подарок, скоро торт начнём резать!'),B(),
+ P(6,'fade'),S('— Спасибо, я отнесу его в комнату?','me'),S('— Да, конечно.'),B(),
+ P(7,'fadeblack'),B('Зайти'),P(8,'fade'),
+ {type:'call',text:'*звонок*',label:'Взять трубку'},
+ P(9,'quick'),S('— Дарья Дмитриевна.'),S('— Да, а вы кто?','me'),S('— Машина ждёт вас внизу.'),S('— Меня? Зачем?','me'),S('— Без вопросов, просто садитесь.'),
+ P(10,'fade'),
+ {type:'choice',options:[
+  {label:'Собрать вещи и спуститься вниз',back:'',steps:[]},
+  {label:'Что за машина? Куда спускаться? Я никуда не поеду, я что, дура?!',back:'1',steps:[{type:'center',text:'Так, дура, не ломай весь сюжет! А ну быстро собрала свои пожитки и села в машину!'}]}]},
+ {type:'checklist',title:'Собрать вещи:',items:['Часы','Рюкзак','Горшочек с хлопком (на всякий случай)','Мотыга (ну вдруг пригодится)','Новую одежду'],label:'Далее'},
+ P(11,'fade'),B('Спуститься вниз','center'),P(12,'fadeblack'),B('Сесть в машину','center')
+]};
 
-  await say('— Гоша, ты опять напился?!');
-  await say('— Да не пил я!');
-  await say('— А ну дыхни.');
-  await say('— Ой, смотри, что это?');
-  await say('— Что?');
-  await blinkOpen();
-  await say('— Да это же ребёнок!');
-  await say('— Привет, сахарок ☺️');
-  await shortBlink(2);
-  await say('— А сахарок-то подгоревший 😏');
-  await say('— Да помолчи ты!');
-  await fade(1,3000);await clearLines();
-  await ask(['Далее']);
-
-  await scene(3,[
-    ['— С днём рождения! Это Олег, хорошо ухаживай за ним.'],
-    ['— укх бу юа бы эт'],
-    ['— Что ты делаешь?'],
-    ['— Перевожу это на её язык, чтобы ей было понятнее.'],
-    ['— *вздох разочарования в идиоте*']]);
-
-  await scene(4,[
-    ['— Поздравляю с 10-летием, уголёк! Расти большой, чтобы легко доставать до самых высоких пальм с кокосами!'],
-    ['— Не слушай папу, солнышко, у этой пьяни все мозги уже пропиты.']]);
-
-  await setPhoto(5,0);await fade(0,2500);
-  await say('— С 15-летием, Дашулепулешушечучечка! Ты уже такая большая 😢 Держи подарок, скоро торт начнём резать!');
-  await ask(['Далее']);
+/* ---------- ИНТЕРПРЕТАТОР ---------- */
+let story=null,runId=0;
+const CHK=id=>{if(id!==runId)throw 'abort'};
+async function runSteps(steps,id){for(const s of steps){CHK(id);await doStep(s,id);CHK(id)}}
+async function photo(s){
+  const n=+s.n,fx=s.fx||'fade';
+  if(fx==='hidden'){await setPhoto(n,0);return}
+  if(fx==='shortblink'){await shortBlink(n);return}
   await clearLines();
-  await setPhoto(6,2000);
-  await say('— Спасибо, я отнесу его в комнату?','me');
-  await say('— Да, конечно.');
-  await ask(['Далее']);
-  await clearLines();
-  await fade(1,1500);await setPhoto(7,0);await fade(0,1500);
-  await ask(['Зайти']);
-  await setPhoto(8,2000);
-
-  // звонок
-  const R=$('ring');R.textContent='*звонок*';R.style.opacity=1;
-  await sleep(1300);
-  R.style.top='46%';
-  await ask(['Взять трубку'],'center');
-  R.style.opacity=0;
-  await setPhoto(9,300);
-  await say('— Дарья Дмитриевна.');
-  await say('— Да, а вы кто?','me');
-  await say('— Машина ждёт вас внизу.');
-  await say('— Меня? Зачем?','me');
-  await say('— Без вопросов, просто садитесь.');
-  await clearLines();
-  await setPhoto(10,800);
-
-  // выбор
-  let opts=['Собрать вещи и спуститься вниз','Что за машина? Куда спускаться? Я никуда не поеду, я что, дура?!'];
-  while(true){
-    const i=await ask(opts,opts.length>1?'row':'center');
-    if(i===0)break;
-    await centerText('Так, дура, не ломай весь сюжет! А ну быстро собрала свои пожитки и села в машину!');
-    opts=[opts[0]];
-  }
-
-  // сбор вещей
-  const things=['Часы','Рюкзак','Горшочек с хлопком (на всякий случай)','Мотыга (ну вдруг пригодится)','Новую одежду'];
-  const L=$('list'),I=$('items');I.innerHTML='';
-  let left=things.length;
-  const done=new Promise(res=>{
-    things.forEach((t,k)=>{
-      const d=document.createElement('div');d.className='item';
-      d.innerHTML=`<div class="box"></div><div>${k+1}) ${t}</div>`;
-      let on=false;
-      d.addEventListener('pointerdown',e=>e.stopPropagation());
-      d.addEventListener('click',()=>{
-        if(on)return;on=true;d.firstChild.textContent='✓';
-        if(--left===0)res()});
-      I.appendChild(d);
-    });
-  });
-  L.classList.add('show');
-  await done;await sleep(400);
-  await ask(['Далее']);
-  L.classList.remove('show');await sleep(1000);
-
-  await setPhoto(11,1500);
-  await ask(['Спуститься вниз'],'center');
-  await fade(1,1500);await setPhoto(12,0);await fade(0,1800);
-  await ask(['Сесть в машину'],'center');
-  // ПРОДОЛЖЕНИЕ СЛЕДУЕТ — сюда добавим следующие сцены
+  if(!lidsOpen)await lids(1,0);
+  if(fx==='cut')await setPhoto(n,0);
+  else if(fx==='quick')await setPhoto(n,400);
+  else if(fx==='fadeblack'){await fade(1,1500);await setPhoto(n,0);await fade(0,1500)}
+  else await setPhoto(n,1800);
 }
+async function doStep(s,id){
+  switch(s.type){
+  case 'title':{const T=$('title');T.textContent=s.text;T.style.opacity=1;await sleep(4000);T.style.opacity=0;await sleep(2500);break}
+  case 'say':await say(s.text||'',s.who==='me'?'me':'',s.audio);break;
+  case 'center':await centerText(s.text||'');break;
+  case 'photo':await photo(s);break;
+  case 'veil':await fade(+s.to,2500);if(+s.to===1)await clearLines();break;
+  case 'blink':await blinkOpen();break;
+  case 'button':await ask([s.label||'Далее'],s.align||'end');await clearLines();break;
+  case 'call':{
+    const R=$('ring');R.style.top='55%';R.textContent=s.text||'*звонок*';R.style.opacity=1;
+    await sleep(1300);R.style.top='46%';
+    await ask([s.label||'Взять трубку'],'center');R.style.opacity=0;break}
+  case 'checklist':{
+    const I=$('items');I.innerHTML='';$('list').querySelector('h3').textContent=s.title||'';
+    const its=s.items||[];let left=its.length;
+    const done=new Promise(res=>{
+      if(!left)res();
+      its.forEach((t,k)=>{
+        const d=document.createElement('div');d.className='item';
+        d.innerHTML='<div class="box"></div><div></div>';d.lastChild.textContent=(k+1)+') '+t;
+        let on=false;
+        d.addEventListener('pointerdown',e=>e.stopPropagation());
+        d.addEventListener('click',()=>{if(on)return;on=true;d.firstChild.textContent='✓';if(--left===0)res()});
+        I.appendChild(d)})});
+    $('list').classList.add('show');await done;await sleep(400);
+    await ask([s.label||'Далее']);$('list').classList.remove('show');await sleep(1000);break}
+  case 'choice':{
+    const o=s.options||[];let idx=o.map((_,i)=>i);
+    while(idx.length){
+      const labels=idx.map(i=>o[i].label);
+      const k=await ask(labels,labels.length>1?'row':'center');CHK(id);
+      const op=o[idx[k]];
+      await runSteps(op.steps||[],id);
+      if(op.back&&idx.length>1)idx.splice(k,1);else break}
+    break}
+  }
+}
+function resetStage(){
+  skip=null;
+  ['pA','pB'].forEach(i=>{$(i).style.transition='none';$(i).style.opacity=0});
+  cur=$('pA');oth=$('pB');
+  $('veil').style.transition='none';$('veil').style.opacity=0;
+  lids(0,0);
+  $('lines').innerHTML='';$('btns').innerHTML='';
+  ['title','ring','center'].forEach(i=>$(i).style.opacity=0);
+  $('list').classList.remove('show');
+}
+async function startGame(from=0){
+  const id=++runId;resetStage();
+  const steps=story.steps,prev=steps.slice(0,from);
+  const lp=[...prev].reverse().find(x=>x.type==='photo');
+  if(lp)await setPhoto(+lp.n,0);
+  if(prev.some(x=>x.type==='blink'||(x.type==='photo'&&x.fx!=='hidden')))await lids(1,0);
+  const lv=[...prev].reverse().find(x=>x.type==='veil');
+  if(lv)await fade(+lv.to,0);
+  try{await runSteps(steps.slice(from),id)}catch(e){if(e!=='abort')console.error(e)}
+}
+async function loadStory(){
+  let st;
+  try{const r=await fetch('story.json?t='+Date.now(),{cache:'no-store'});if(!r.ok)throw 0;st=await r.json();if(!st.steps)throw 0}
+  catch(e){st=JSON.parse(JSON.stringify(DEFAULT))}
+  return st;
+}
+function preload(steps){steps.forEach(s=>{if(s.type==='photo')new Image().src=PHOTO_DIR+'foto'+(+s.n)+'.jpg';(s.options||[]).forEach(o=>preload(o.steps||[]))})}
 
-$('start').addEventListener('click',()=>{$('start').remove();
-  // 1) закрыть веки до начала (экран чёрный)
-  $('lidT').style.transition=$('lidB').style.transition='none';
-  play();
-},{once:true});
+/* ---------- РЕДАКТОР (открывается по адресу ...?edit) ---------- */
+const h=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
+const FX=[['fade','Плавно'],['quick','Быстро плавно'],['cut','Сразу'],['fadeblack','Через затемнение'],['shortblink','Короткое моргание'],['hidden','Скрыто под чёрным (под веками)']];
+const AL=[['end','Справа (как «Далее»)'],['center','По центру']];
+const TYPES={
+ title:{name:'🎬 Заголовок',f:[['text','Текст','area']],d:()=>({type:'title',text:''})},
+ say:{name:'💬 Реплика',f:[['text','Текст','area'],['who','Кто говорит','sel',[['npc','Другие (белый)'],['me','Героиня (синий)']]],['audio','Файл голоса (необязательно, например golos1.mp3)','text']],d:()=>S('')},
+ center:{name:'📢 Текст по центру',f:[['text','Текст','area']],d:()=>({type:'center',text:''})},
+ photo:{name:'🖼 Фото',f:[['n','Номер фото','num'],['fx','Как появляется','sel',FX]],d:()=>P(1,'fade')},
+ veil:{name:'🌗 Затемнение / осветление',f:[['to','Что сделать','sel',[['1','Затемнить экран'],['0','Осветлить экран']]]],d:()=>V(1)},
+ blink:{name:'👁 Открыть глаза (моргание)',f:[],d:()=>({type:'blink'})},
+ button:{name:'🔘 Кнопка',f:[['label','Надпись','text'],['align','Где','sel',AL]],d:()=>B()},
+ call:{name:'📞 Звонок',f:[['text','Надпись','text'],['label','Кнопка','text']],d:()=>({type:'call',text:'*звонок*',label:'Взять трубку'})},
+ checklist:{name:'☑️ Список вещей',f:[['title','Заголовок','text'],['items','Пункты (каждый с новой строки)','lines'],['label','Кнопка','text']],d:()=>({type:'checklist',title:'',items:[],label:'Далее'})},
+ choice:{name:'🔀 Выбор',f:[],d:()=>({type:'choice',options:[{label:'',back:'',steps:[]},{label:'',back:'',steps:[]}]})}
+};
+const eSt=t=>$('eSt').textContent=t;
+const changed=()=>{localStorage.setItem('draft',JSON.stringify(story));eSt('Черновик сохранён в этом браузере. Нажми «Сохранить для всех».')};
+function field(s,[k,label,kind,opts]){
+  const w=h('label','fld');w.append(h('span','',label));let c;
+  if(kind==='sel'){c=h('select');opts.forEach(([v,t])=>{const o=h('option','',t);o.value=v;c.append(o)});c.value=s[k]??opts[0][0]}
+  else if(kind==='area'||kind==='lines'){c=h('textarea');c.rows=kind==='lines'?5:3;c.value=kind==='lines'?(s[k]||[]).join('\n'):(s[k]||'')}
+  else{c=h('input');c.type=kind==='num'?'number':'text';c.value=s[k]??''}
+  c.addEventListener('input',()=>{s[k]=kind==='lines'?c.value.split('\n').filter(x=>x.trim()):c.value;changed()});
+  w.append(c);return w;
+}
+function redraw(){const y=$('editor').scrollTop;$('eL').innerHTML='';renderList(story.steps,$('eL'),true);$('editor').scrollTop=y}
+function renderList(steps,parent,top){
+  steps.forEach((s,i)=>{
+    const T=TYPES[s.type],c=h('div','card'),bar=h('div','bar'),ctr=h('span','ctr');
+    bar.append(h('b','',(top?(i+1)+'. ':'')+T.name));
+    const bt=(l,fn)=>{const b=h('button','',l);b.onclick=fn;ctr.append(b)};
+    if(top)bt('▶',()=>{document.body.className='edit pv';startGame(i)});
+    bt('↑',()=>{if(i>0){[steps[i-1],steps[i]]=[steps[i],steps[i-1]];changed();redraw()}});
+    bt('↓',()=>{if(i<steps.length-1){[steps[i+1],steps[i]]=[steps[i],steps[i+1]];changed();redraw()}});
+    bt('✕',()=>{if(confirm('Удалить этот блок?')){steps.splice(i,1);changed();redraw()}});
+    bar.append(ctr);c.append(bar);
+    T.f.forEach(f=>c.append(field(s,f)));
+    if(s.type==='choice'){
+      s.options.forEach((o,k)=>{
+        const ob=h('div','opt');ob.append(h('b','',`Вариант ${k+1}`));
+        ob.append(field(o,['label','Текст кнопки','text']));
+        ob.append(field(o,['back','После этого варианта','sel',[['','Идти дальше по сюжету'],['1','Вернуться к выбору (этот вариант пропадёт)']]]));
+        ob.append(h('div','sub','Что происходит после нажатия:'));
+        const n=h('div','nest');renderList(o.steps,n,false);ob.append(n);
+        const del=h('button','del','Удалить вариант');del.onclick=()=>{if(s.options.length>1&&confirm('Удалить вариант?')){s.options.splice(k,1);changed();redraw()}};
+        ob.append(del);c.append(ob)});
+      const add=h('button','add','+ Ещё вариант');add.onclick=()=>{s.options.push({label:'',back:'',steps:[]});changed();redraw()};c.append(add);
+    }
+    parent.append(c);
+  });
+  const row=h('div','addrow'),sel=h('select');
+  Object.keys(TYPES).forEach(k=>{const o=h('option','',TYPES[k].name);o.value=k;sel.append(o)});
+  const b=h('button','add','+ Добавить');b.onclick=()=>{steps.push(TYPES[sel.value].d());changed();redraw()};
+  row.append(sel,b);parent.append(row);
+}
+async function publish(){
+  const m=location.hostname.match(/^(.+)\.github\.io$/);
+  let repo=m?m[1]+'/'+location.pathname.split('/')[1]:(localStorage.gh_repo||prompt('Репозиторий в формате имя/репозиторий'));
+  if(!m&&repo)localStorage.gh_repo=repo;
+  let tk=localStorage.gh_token||prompt('Вставь токен GitHub (он хранится только в этом браузере)');
+  if(!tk||!repo)return;
+  localStorage.gh_token=tk;
+  const url=`https://api.github.com/repos/${repo}/contents/story.json`;
+  const hd={Authorization:'Bearer '+tk,Accept:'application/vnd.github+json'};
+  eSt('Сохраняю…');
+  try{
+    let sha;const g=await fetch(url,{headers:hd,cache:'no-store'});
+    if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error('Ошибка '+g.status+' — проверь токен');
+    const body={message:'Обновление сюжета',content:btoa(unescape(encodeURIComponent(JSON.stringify(story,null,1)))),sha};
+    const r=await fetch(url,{method:'PUT',headers:hd,body:JSON.stringify(body)});
+    if(!r.ok)throw new Error('Ошибка '+r.status+' — проверь токен и права');
+    eSt('✅ Сохранено. У всех обновится через 1–2 минуты.');
+  }catch(e){eSt('❌ '+e.message);if(/токен/.test(e.message))localStorage.removeItem('gh_token')}
+}
+async function initEditor(){
+  const d=localStorage.getItem('draft');
+  story=d?JSON.parse(d):await storyP;
+  preload(story.steps);
+  eSt(d?'Загружен твой черновик. Кнопка «Сброс» вернёт версию с сайта.':'Загружена версия с сайта.');
+  redraw();
+  $('eP').onclick=()=>{document.body.className='edit pv';startGame(0)};
+  $('eS').onclick=publish;
+  $('eD').onclick=()=>{const a=h('a');a.href=URL.createObjectURL(new Blob([JSON.stringify(story,null,1)],{type:'application/json'}));a.download='story.json';a.click()};
+  $('eR').onclick=async()=>{if(confirm('Отбросить черновик и загрузить версию с сайта?')){localStorage.removeItem('draft');story=await loadStory();redraw();eSt('Загружена версия с сайта.')}};
+  $('exitpv').onclick=()=>{runId++;resetStage();document.body.className='edit'};
+}
+const storyP=loadStory();
+if(/[?&]edit/.test(location.search)){$('start').remove();document.body.className='edit';initEditor()}
+else $('start').addEventListener('click',async()=>{$('start').remove();story=await storyP;preload(story.steps);startGame(0)},{once:true});
 </script>
 </body>
 </html>
