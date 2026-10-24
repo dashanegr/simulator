@@ -289,6 +289,10 @@
    "align": "center"
   },
   {
+   "type": "title",
+   "text": "Акт 2:\nЗнакомство"
+  },
+  {
    "type": "photo",
    "n": "13",
    "fx": "fadeblack"
