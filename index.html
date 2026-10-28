@@ -72,7 +72,7 @@ body.pv #exitpv{display:block}
 #invd .row{display:flex;gap:10px;justify-content:center;margin-top:10px}#invd button{font:700 15px system-ui;color:#fff;background:#222;border:1px solid #888;border-radius:10px;padding:10px 16px}
 #notices{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 200px);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:8;pointer-events:none}
 .nt{font-size:13px;font-weight:600;color:#fff;padding:6px 16px;border:1.5px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(0,0,0,.6);opacity:0;transition:opacity .5s}
-.nt.show{opacity:.8}
+.nt.show{opacity:.9}.nt.show.back{opacity:.4}.nt.gone{opacity:0!important}.up{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
 </style>
 </head>
 <body>
@@ -99,13 +99,14 @@ const $=id=>document.getElementById(id);
 const sleep=ms=>new Promise(r=>setTimeout(r,ms));
 const raf=()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r)));
 const PHOTO_DIR=''; // папка с фото, например 'photos/' (если лежат рядом с index.html — оставь пустым)
-const PHOTO_COUNT=12; // когда добавишь новые фото — увеличь число
+const PHOTO_COUNT=12;
+const LOCAL={};const url=n=>LOCAL[n]||PHOTO_DIR+n; // когда добавишь новые фото — увеличь число
 for(let i=1;i<=PHOTO_COUNT;i++){new Image().src=PHOTO_DIR+'foto'+i+'.jpg'}
 
 /* ---------- фото ---------- */
 let cur=$('pA'),oth=$('pB');
 async function setPhoto(n,ms=0){
-  oth.src=PHOTO_DIR+'foto'+n+'.jpg';
+  oth.src=url('foto'+n+'.jpg');
   oth.style.transition=cur.style.transition=ms?`opacity ${ms}ms`:'none';
   oth.style.opacity=1;cur.style.opacity=0;
   [cur,oth]=[oth,cur];
@@ -134,7 +135,7 @@ function hold(ms){return new Promise(res=>{const t=setTimeout(done,ms);const t0=
   function done(){clearTimeout(t);skip=null;res()}
   skip=()=>{if(Date.now()-t0>500)done()}})}
 async function say(text,cls='',audio){
-  if(audio){try{new Audio(audio).play().catch(()=>{})}catch(e){}}
+  if(audio){try{new Audio(LOCAL[audio]||audio).play().catch(()=>{})}catch(e){}}
   const box=$('lines');
   const f=box.querySelector('.front'),b=box.querySelector('.back:not(.gone)');
   if(b){b.classList.add('gone');setTimeout(()=>b.remove(),800)}
@@ -227,13 +228,13 @@ function updInv(){
   inv.forEach(x=>{
     const d=document.createElement('div');d.className='tile';
     const th=document.createElement('div');th.className='th';
-    if(x.photo){const im=document.createElement('img');im.src=PHOTO_DIR+x.photo;im.onerror=()=>{im.remove();th.textContent='📦'};th.append(im)}else th.textContent='📦';
+    if(x.photo){const im=document.createElement('img');im.src=url(x.photo);im.onerror=()=>{im.remove();th.textContent='📦'};th.append(im)}else th.textContent='📦';
     const nm=document.createElement('div');nm.textContent=x.name;
     d.append(th,nm);d.onclick=()=>openItem(x);l.append(d)});
 }
 function openItem(x){
   const d=$('invd');d.innerHTML='';
-  if(x.photo){const im=document.createElement('img');im.src=PHOTO_DIR+x.photo;im.onerror=()=>im.remove();d.append(im)}
+  if(x.photo){const im=document.createElement('img');im.src=url(x.photo);im.onerror=()=>im.remove();d.append(im)}
   const t=document.createElement('h3');t.textContent=x.name;d.append(t);
   if(x.desc){const p=document.createElement('p');p.textContent=x.desc;d.append(p)}
   const row=document.createElement('div');row.className='row';
@@ -245,7 +246,7 @@ function activateItem(x,silent){
   const i=inv.indexOf(x);if(i>=0)inv.splice(i,1);
   act.push(x.name);
   $('invd').style.display='none';$('invp').style.display='none';updInv();
-  if(x.actText&&!silent)notice(x.actText,false);
+  if(x.actText&&!silent)notice(x.actText,false,x.actSec);
 }
 function applyInv(s){
   const n=(s.name||'').trim();if(!n)return;
@@ -260,14 +261,18 @@ function applyInv(s){
     if(s.desc)it.desc=s.desc;
     if(s.can==='1')it.can=true;
     if(s.actText)it.actText=s.actText;
+    if(s.actSec)it.actSec=s.actSec;
     invOn=true}
   updInv();
 }
 function showClock(t){clockText=t||'';const c=$('clock');c.textContent=clockText;c.style.opacity=clockText?1:0}
-async function notice(t,wait=true){
+async function notice(t,wait=true,sec){
+  const box=$('notices'),ms=(parseFloat(sec)||2.6)*1000;
+  const kill=o=>{o.classList.add('gone');setTimeout(()=>o.remove(),600)};
+  [...box.querySelectorAll('.nt:not(.gone)')].forEach(o=>{if(o.classList.contains('back'))kill(o);else o.classList.add('back')});
   const e=document.createElement('div');e.className='nt';e.textContent=t;
-  $('notices').appendChild(e);await raf();e.classList.add('show');
-  const p=sleep(2600).then(()=>{e.classList.remove('show');setTimeout(()=>e.remove(),600)});
+  box.appendChild(e);await raf();e.classList.add('show');
+  const p=sleep(ms).then(()=>{if(!e.classList.contains('gone'))kill(e)});
   if(wait)await p;
 }
 
@@ -311,11 +316,11 @@ async function doStep(s,id){
         d.addEventListener('pointerdown',e=>e.stopPropagation());
         d.addEventListener('click',()=>{if(on)return;on=true;d.firstChild.textContent='✓';if(--left===0)res()});
         I.appendChild(d)})});
-    $('list').classList.add('show');await done;await sleep(400);its.forEach(invAdd);invOn=true;updInv();
+    $('list').classList.add('show');await done;await sleep(400);invOn=true;updInv();
     await ask([s.label||'Далее']);$('list').classList.remove('show');await sleep(1000);break}
   case 'clock':showClock(s.text);break;
-  case 'inv':applyInv(s);if(s.text)await notice(s.text,s.wait!=='0');break;
-  case 'notice':await notice(s.text||'',s.wait!=='0');break;
+  case 'inv':applyInv(s);if(s.text)await notice(s.text,s.wait!=='0',s.sec);break;
+  case 'notice':await notice(s.text||'',s.wait!=='0',s.sec);break;
   case 'if':{
     const n=(s.name||'').trim(),a=isAct(n),hv=invFind(n)>=0;
     const ok=s.cond==='notactive'?!a:s.cond==='have'?hv:a;
@@ -345,7 +350,7 @@ function resetStage(){
 async function startGame(from=0){
   const id=++runId;resetStage();
   const steps=story.steps,prev=steps.slice(0,from);
-  for(const x of prev){if(x.type==='checklist'){(x.items||[]).forEach(invAdd);invOn=true}else if(x.type==='inv')applyInv(x);else if(x.type==='clock')clockText=x.text||''}
+  for(const x of prev){if(x.type==='checklist'){invOn=true}else if(x.type==='inv')applyInv(x);else if(x.type==='clock')clockText=x.text||''}
   updInv();showClock(clockText);
   const lp=[...prev].reverse().find(x=>x.type==='photo');
   if(lp)await setPhoto(+lp.n,0);
@@ -368,30 +373,22 @@ const FX=[['fade','Плавно'],['quick','Быстро плавно'],['cut','
 const AL=[['end','Справа (как «Далее»)'],['center','По центру']];
 const TYPES={
  title:{name:'🎬 Заголовок',f:[['text','Текст','area']],d:()=>({type:'title',text:''})},
- say:{name:'💬 Реплика',f:[['text','Текст','area'],['who','Кто говорит','sel',[['npc','Другие (белый)'],['me','Героиня (синий)']]],['audio','Файл голоса (необязательно, например golos1.mp3)','text']],d:()=>S('')},
+ say:{name:'💬 Реплика',f:[['text','Текст','area'],['who','Кто говорит','sel',[['npc','Другие (белый)'],['me','Героиня (синий)']]],['audio','Голос (необязательно)','audio']],d:()=>S('')},
  center:{name:'📢 Текст по центру',f:[['text','Текст','area']],d:()=>({type:'center',text:''})},
- photo:{name:'🖼 Фото',f:[['n','Номер фото','num'],['fx','Как появляется','sel',FX]],d:()=>P(1,'fade')},
+ photo:{name:'🖼 Фото',f:[['n','Номер фото','fotonum'],['fx','Как появляется','sel',FX]],d:()=>P(1,'fade')},
  veil:{name:'🌗 Затемнение / осветление',f:[['to','Что сделать','sel',[['1','Затемнить экран'],['0','Осветлить экран']]]],d:()=>V(1)},
  blink:{name:'👁 Открыть глаза (моргание)',f:[],d:()=>({type:'blink'})},
  button:{name:'🔘 Кнопка',f:[['label','Надпись','text'],['align','Где','sel',AL]],d:()=>B()},
  call:{name:'📞 Звонок',f:[['text','Надпись','text'],['label','Кнопка','text']],d:()=>({type:'call',text:'*звонок*',label:'Взять трубку'})},
  checklist:{name:'☑️ Список вещей',f:[['title','Заголовок','text'],['items','Пункты (каждый с новой строки)','lines'],['label','Кнопка','text']],d:()=>({type:'checklist',title:'',items:[],label:'Далее'})},
  clock:{name:'🕒 Время в углу',f:[['text','Что показывать (например 14:30). Пусто — спрятать','text']],d:()=>({type:'clock',text:''})},
- inv:{name:'🎒 Инвентарь',f:[['action','Действие','sel',[['add','Добавить предмет / задать его данные'],['activate','Активировать (предмет исчезнет из инвентаря)'],['deactivate','Сделать неактивированным'],['remove','Убрать предмет']]],['name','Название предмета (например: часы)','text'],['photo','Файл фото предмета (например: chasy.jpg)','text'],['desc','Описание при рассматривании','area'],['can','Кнопка «Активировать» в просмотре','sel',[['','Без кнопки'],['1','Есть кнопка']]],['actText','Надпись в овале, когда игрок нажмёт «Активировать»','text'],['text','Надпись в овале на этом шаге (например: Часы добавлены в инвентарь)','text'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'inv',action:'add',name:'',photo:'',desc:'',can:'',actText:'',text:'',wait:'1'})},
+ inv:{name:'🎒 Инвентарь',f:[['action','Действие','sel',[['add','Добавить предмет / задать его данные'],['activate','Активировать (предмет исчезнет из инвентаря)'],['deactivate','Сделать неактивированным'],['remove','Убрать предмет']]],['name','Название предмета (например: часы)','text'],['photo','Фото предмета','img'],['desc','Описание при рассматривании','area'],['can','Кнопка «Активировать» в просмотре','sel',[['','Без кнопки'],['1','Есть кнопка']]],['actText','Надпись в овале, когда игрок нажмёт «Активировать»','text'],['actSec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['text','Надпись в овале на этом шаге (например: Часы добавлены в инвентарь)','text'],['sec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'inv',action:'add',name:'',photo:'',desc:'',can:'',actText:'',text:'',wait:'1'})},
  if:{name:'❓ Если предмет…',f:[['name','Название предмета (например: часы)','text'],['cond','Условие','sel',[['active','Предмет активирован'],['notactive','Предмет НЕ активирован'],['have','Предмет сейчас в инвентаре']]]],d:()=>({type:'if',name:'',cond:'active',then:[],else:[]})},
- notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
+ notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['sec','Сколько секунд показывать (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
  choice:{name:'🔀 Выбор',f:[],d:()=>({type:'choice',options:[{label:'',back:'',steps:[]},{label:'',back:'',steps:[]}]})}
 };
 const eSt=t=>$('eSt').textContent=t;
 const changed=()=>{localStorage.setItem('draft',JSON.stringify(story));eSt('Черновик сохранён в этом браузере. Нажми «Сохранить для всех».')};
-function field(s,[k,label,kind,opts]){
-  const w=h('label','fld');w.append(h('span','',label));let c;
-  if(kind==='sel'){c=h('select');opts.forEach(([v,t])=>{const o=h('option','',t);o.value=v;c.append(o)});c.value=s[k]??opts[0][0]}
-  else if(kind==='area'||kind==='lines'){c=h('textarea');c.rows=kind==='lines'?5:3;c.value=kind==='lines'?(s[k]||[]).join('\n'):(s[k]||'')}
-  else{c=h('input');c.type=kind==='num'?'number':'text';c.value=s[k]??''}
-  c.addEventListener('input',()=>{s[k]=kind==='lines'?c.value.split('\n').filter(x=>x.trim()):c.value;changed()});
-  w.append(c);return w;
-}
 function redraw(){const y=$('editor').scrollTop;$('eL').innerHTML='';renderList(story.steps,$('eL'),true);$('editor').scrollTop=y}
 function renderList(steps,parent,top){
   steps.forEach((s,i)=>{
@@ -423,24 +420,95 @@ function renderList(steps,parent,top){
   const b=h('button','add','+ Добавить');b.onclick=()=>{steps.push(TYPES[sel.value].d());changed();redraw()};
   row.append(sel,b);parent.append(row);
 }
-async function publish(){
+function ghAuth(){
   const m=location.hostname.match(/^(.+)\.github\.io$/);
   let repo=m?m[1]+'/'+location.pathname.split('/')[1]:(localStorage.gh_repo||prompt('Репозиторий в формате имя/репозиторий'));
   if(!m&&repo)localStorage.gh_repo=repo;
   let tk=localStorage.gh_token||prompt('Вставь токен GitHub (он хранится только в этом браузере)');
-  if(!tk||!repo)return;
+  if(!tk||!repo)throw new Error('Нужен токен GitHub');
   localStorage.gh_token=tk;
-  const url=`https://api.github.com/repos/${repo}/contents/story.json`;
-  const hd={Authorization:'Bearer '+tk,Accept:'application/vnd.github+json'};
+  return {repo,hd:{Authorization:'Bearer '+tk,Accept:'application/vnd.github+json'}};
+}
+async function ghPut(path,blob,msg){
+  const a=ghAuth(),api=`https://api.github.com/repos/${a.repo}/contents/${path}`;
+  const b64=typeof blob==='string'?btoa(unescape(encodeURIComponent(blob))):await new Promise(res=>{const f=new FileReader();f.onload=()=>res(f.result.split(',')[1]);f.readAsDataURL(blob)});
+  let sha;const g=await fetch(api,{headers:a.hd,cache:'no-store'});
+  if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error('Ошибка '+g.status+' — проверь токен');
+  const r=await fetch(api,{method:'PUT',headers:a.hd,body:JSON.stringify({message:msg,content:b64,sha})});
+  if(!r.ok)throw new Error('Ошибка '+r.status+' — проверь токен и права');
+}
+async function nextNum(prefix,dir){
+  const a=ghAuth();
+  const r=await fetch(`https://api.github.com/repos/${a.repo}/contents/${dir||''}`,{headers:a.hd,cache:'no-store'});
+  if(!r.ok)throw new Error('Не удалось прочитать список файлов ('+r.status+')');
+  const re=new RegExp('^'+prefix+'(\\d+)\\.');let m=0;
+  (await r.json()).forEach(f=>{const x=f.name.match(re);if(x)m=Math.max(m,+x[1])});
+  return m+1;
+}
+async function publish(){
   eSt('Сохраняю…');
-  try{
-    let sha;const g=await fetch(url,{headers:hd,cache:'no-store'});
-    if(g.ok)sha=(await g.json()).sha;else if(g.status!==404)throw new Error('Ошибка '+g.status+' — проверь токен');
-    const body={message:'Обновление сюжета',content:btoa(unescape(encodeURIComponent(JSON.stringify(story,null,1)))),sha};
-    const r=await fetch(url,{method:'PUT',headers:hd,body:JSON.stringify(body)});
-    if(!r.ok)throw new Error('Ошибка '+r.status+' — проверь токен и права');
-    eSt('✅ Сохранено. У всех обновится через 1–2 минуты.');
-  }catch(e){eSt('❌ '+e.message);if(/токен/.test(e.message))localStorage.removeItem('gh_token')}
+  try{await ghPut('story.json',JSON.stringify(story,null,1),'Обновление сюжета');eSt('✅ Сохранено. У всех обновится через 1–2 минуты.')}
+  catch(e){eSt('❌ '+e.message);if(/токен/.test(e.message))localStorage.removeItem('gh_token')}
+}
+const pickFile=accept=>new Promise(r=>{const i=document.createElement('input');i.type='file';i.accept=accept;i.onchange=()=>r(i.files[0]||null);i.click()});
+async function toJpeg(file){
+  const bmp=await createImageBitmap(file),k=Math.min(1,1600/Math.max(bmp.width,bmp.height));
+  const cv=document.createElement('canvas');cv.width=Math.round(bmp.width*k);cv.height=Math.round(bmp.height*k);
+  cv.getContext('2d').drawImage(bmp,0,0,cv.width,cv.height);
+  return new Promise(r=>cv.toBlob(r,'image/jpeg',.88));
+}
+async function toWav(blob){
+  const ac=new (window.AudioContext||window.webkitAudioContext)();
+  const buf=await ac.decodeAudioData(await blob.arrayBuffer());ac.close();
+  const sr=22050,n=Math.max(1,Math.round(buf.duration*sr));
+  const oc=new OfflineAudioContext(1,n,sr),src=oc.createBufferSource();
+  src.buffer=buf;src.connect(oc.destination);src.start();
+  const out=(await oc.startRendering()).getChannelData(0);
+  const v=new DataView(new ArrayBuffer(44+n*2));
+  const w=(o,t)=>{for(let i=0;i<t.length;i++)v.setUint8(o+i,t.charCodeAt(i))};
+  w(0,'RIFF');v.setUint32(4,36+n*2,true);w(8,'WAVEfmt ');v.setUint32(16,16,true);v.setUint16(20,1,true);v.setUint16(22,1,true);
+  v.setUint32(24,sr,true);v.setUint32(28,sr*2,true);v.setUint16(32,2,true);v.setUint16(34,16,true);w(36,'data');v.setUint32(40,n*2,true);
+  for(let i=0;i<n;i++){const x=Math.max(-1,Math.min(1,out[i]));v.setInt16(44+i*2,x<0?x*32768:x*32767,true)}
+  return new Blob([v],{type:'audio/wav'});
+}
+let rec=null;
+async function recToggle(btn,done){
+  if(rec){rec.stop();return}
+  const st=await navigator.mediaDevices.getUserMedia({audio:true}),ch=[];
+  rec=new MediaRecorder(st);
+  rec.ondataavailable=e=>ch.push(e.data);
+  rec.onstop=async()=>{st.getTracks().forEach(t=>t.stop());rec=null;btn.textContent='🎙 Записать';
+    try{eSt('Обрабатываю запись…');await done(await toWav(new Blob(ch)))}catch(e){eSt('❌ '+e.message)}};
+  rec.start();btn.textContent='⏹ Стоп';eSt('Идёт запись… нажми «Стоп», когда закончишь.');
+}
+function field(s,[k,label,kind,opts]){
+  const w=h('label','fld');w.append(h('span','',label));let c;
+  if(kind==='sel'){c=h('select');opts.forEach(([v,t])=>{const o=h('option','',t);o.value=v;c.append(o)});c.value=s[k]??opts[0][0]}
+  else if(kind==='area'||kind==='lines'){c=h('textarea');c.rows=kind==='lines'?5:3;c.value=kind==='lines'?(s[k]||[]).join('\n'):(s[k]||'')}
+  else{c=h('input');c.type=(kind==='num'||kind==='fotonum')?'number':'text';if(c.type==='number')c.step='any';c.value=s[k]??''}
+  c.addEventListener('input',()=>{s[k]=kind==='lines'?c.value.split('\n').filter(x=>x.trim()):c.value;changed()});
+  w.append(c);
+  if(kind==='img'||kind==='fotonum'||kind==='audio'){
+    const up=h('div','up'),dir=PHOTO_DIR.replace(/\/$/,'');
+    const bt=(l,fn)=>{const b=h('button','',l);b.type='button';b.onclick=e=>{e.preventDefault();fn(b)};up.append(b)};
+    const setV=v=>{c.value=v;s[k]=String(v);changed()};
+    const run=async f=>{try{eSt('Загружаю…');await f();eSt('✅ Загружено. Для других игроков появится через 1–2 минуты.')}catch(e){eSt('❌ '+e.message)}};
+    const put=async(blob,path,name)=>{await ghPut(path,blob,'Загрузка '+name);LOCAL[name]=URL.createObjectURL(blob)};
+    if(kind==='img'||kind==='fotonum')bt('📷 Загрузить фото',()=>run(async()=>{
+      const f=await pickFile('image/*');if(!f)return;
+      const pre=kind==='img'?'item':'foto',n=await nextNum(pre,dir),name=pre+n+'.jpg';
+      await put(await toJpeg(f),PHOTO_DIR+name,name);setV(kind==='img'?name:n)}));
+    if(kind==='audio'){
+      bt('🎙 Записать',b=>recToggle(b,blob=>run(async()=>{const n=await nextNum('golos'),name='golos'+n+'.wav';await put(blob,name,name);setV(name)})));
+      bt('📁 Файл',()=>run(async()=>{
+        const f=await pickFile('audio/*');if(!f)return;
+        const n=await nextNum('golos'),name='golos'+n+'.'+(f.name.split('.').pop()||'mp3').toLowerCase();
+        await put(f,name,name);setV(name)}));
+      bt('▶ Слушать',()=>{if(s[k])new Audio(LOCAL[s[k]]||s[k]).play().catch(()=>{})});
+    }
+    w.append(up);
+  }
+  return w;
 }
 async function initEditor(){
   const d=localStorage.getItem('draft');
