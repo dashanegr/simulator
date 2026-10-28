@@ -329,14 +329,22 @@
    "desc": "",
    "can": "",
    "actText": "",
-   "text": "",
+   "text": "Часы активированы✅⌚",
    "wait": "1",
    "sec": "0.6"
+  },
+  {
+   "type": "clock",
+   "text": "00:07"
   },
   {
    "type": "button",
    "label": "Спуститься вниз",
    "align": "center"
+  },
+  {
+   "type": "clock",
+   "text": "00:15"
   },
   {
    "type": "photo",
@@ -420,6 +428,18 @@
    "type": "say",
    "text": "— Держите, вы номер Э17962",
    "who": "npc"
+  },
+  {
+   "type": "inv",
+   "action": "add",
+   "name": "Талончик",
+   "photo": "tallon.jpg",
+   "desc": "Талончик, самый обычный",
+   "can": "",
+   "actText": "",
+   "text": "Талончик добавлен в инвентарь🧾",
+   "wait": "1",
+   "sec": "0.8"
   }
  ]
 }
