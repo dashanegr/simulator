@@ -440,6 +440,26 @@
    "text": "Талончик добавлен в инвентарь🧾",
    "wait": "1",
    "sec": "0.8"
+  },
+  {
+   "type": "button",
+   "label": "Подождать свое очереди",
+   "align": "end"
+  },
+  {
+   "type": "photo",
+   "n": "17",
+   "fx": "quick"
+  },
+  {
+   "type": "button",
+   "label": "Подойти к стойке",
+   "align": "end"
+  },
+  {
+   "type": "photo",
+   "n": "18",
+   "fx": "fade"
   }
  ]
 }
