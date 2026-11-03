@@ -301,7 +301,7 @@ async function photo(s){
   else if(fx==='fadeblack'){await fade(1,1500);await setPhoto(n,0);await fade(0,1500)}
   else await setPhoto(n,1800);
 }
-async function tableShow(cards){
+async function tableShow(cards,defSec){
   const T=$('table');T.innerHTML='';T.style.transition='opacity 1.5s';T.style.opacity=1;await sleep(1600);
   let prev=null;
   for(const c of cards){
@@ -316,11 +316,12 @@ async function tableShow(cards){
     d.style.transform=`translate(${dx}px,calc(${dy}px - 50%)) rotate(${r}deg)`;d.style.opacity=1;
     prev=d;
     const a=c.audio?new Audio(LOCAL[c.audio]||c.audio):null;if(a)a.play().catch(()=>{});
+    const fixed=parseFloat(c.sec)||defSec||0;
     await new Promise(res=>{
       let done=false;const fin=()=>{if(!done){done=true;skip=null;res()}};
-      if(a){a.onended=fin;a.onerror=()=>setTimeout(fin,2500)}
+      if(a&&!fixed){a.onended=fin;a.onerror=()=>setTimeout(fin,2500)}
       const t0=Date.now();skip=()=>{if(Date.now()-t0>700)fin()};
-      setTimeout(fin,a?40000:2200+(c.text||'').length*70)});
+      setTimeout(fin,fixed?fixed*1000:(a?40000:2200+(c.text||'').length*70))});
     if(a)a.pause();
     await sleep(500);
   }
@@ -363,7 +364,7 @@ async function doStep(s,id){
     await fade(1,2500);await clearLines();
     if(!lidsOpen)await lids(1,0);
     const E=$('ending'),tbl=s.mode==='table'&&(s.cards||[]).length;
-    if(tbl)await tableShow(s.cards);
+    if(tbl)await tableShow(s.cards,parseFloat(s.secAll)||0);
     else if(s.bg){await setPhoto(+s.bg,0);await fade(.55,2000)}
     E.style.background=tbl?'rgba(0,0,0,.55)':'';
     $('endT').textContent=s.title||'Конец';$('endX').textContent=s.text||'';
@@ -430,8 +431,8 @@ const TYPES={
  inv:{name:'🎒 Инвентарь',f:[['action','Действие','sel',[['add','Добавить предмет / задать его данные'],['activate','Активировать (предмет исчезнет из инвентаря)'],['deactivate','Сделать неактивированным'],['remove','Убрать предмет']]],['name','Название предмета (например: часы)','text'],['photo','Фото предмета','img'],['desc','Описание при рассматривании','area'],['can','Кнопка «Активировать» в просмотре','sel',[['','Без кнопки'],['1','Есть кнопка']]],['actText','Надпись в овале, когда игрок нажмёт «Активировать»','text'],['actSec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['text','Надпись в овале на этом шаге (например: Часы добавлены в инвентарь)','text'],['sec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'inv',action:'add',name:'',photo:'',desc:'',can:'',actText:'',text:'',wait:'1'})},
  if:{name:'❓ Если предмет…',f:[['name','Название предмета (например: часы)','text'],['cond','Условие','sel',[['active','Предмет активирован'],['notactive','Предмет НЕ активирован'],['have','Предмет сейчас в инвентаре']]]],d:()=>({type:'if',name:'',cond:'active',then:[],else:[]})},
  notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['sec','Сколько секунд показывать (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
- ending:{name:'🏁 Концовка',f:[['mode','Вид концовки','sel',[['plain','Обычная (название и текст)'],['table','Фотографии на столе (как из фотоаппарата)']]],['bg','Фото на фоне (для обычной, необязательно)','fotonum'],['title','Название концовки (например: Концовка 1: Дом)','text'],['text','Текст под названием (необязательно)','area'],['restart','Кнопка после концовки','sel',[['1','«Начать заново»'],['','Без кнопки']]]],d:()=>({type:'ending',mode:'plain',bg:'',title:'',text:'',restart:'1',cards:[]})},
- card:{name:'📷 Фотография на столе',hid:1,f:[['n','Номер фото','fotonum'],['text','Подпись под фото','text'],['audio','Голос (необязательно)','audio']],d:()=>({type:'card',n:'',text:'',audio:''})},
+ ending:{name:'🏁 Концовка',f:[['mode','Вид концовки','sel',[['plain','Обычная (название и текст)'],['table','Фотографии на столе (как из фотоаппарата)']]],['bg','Фото на фоне (для обычной, необязательно)','fotonum'],['title','Название концовки (например: Концовка 1: Дом)','text'],['text','Текст под названием (необязательно)','area'],['restart','Кнопка после концовки','sel',[['1','«Начать заново»'],['','Без кнопки']]],['secAll','Секунд на каждое фото по умолчанию (пусто — автоматически: по голосу или по длине подписи)','num']],d:()=>({type:'ending',mode:'plain',bg:'',title:'',text:'',restart:'1',secAll:'',cards:[]})},
+ card:{name:'📷 Фотография на столе',hid:1,f:[['n','Номер фото','fotonum'],['text','Подпись под фото','text'],['audio','Голос (необязательно)','audio'],['sec','Сколько секунд держать это фото, пока не ляжет следующее (пусто — по умолчанию из концовки)','num']],d:()=>({type:'card',n:'',text:'',audio:'',sec:''})},
  choice:{name:'🔀 Выбор',f:[],d:()=>({type:'choice',options:[{label:'',back:'',steps:[]},{label:'',back:'',steps:[]}]})}
 };
 const SEL=new Set();let CLIP=JSON.parse(localStorage.getItem('clip')||'[]');
