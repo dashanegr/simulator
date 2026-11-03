@@ -73,6 +73,14 @@ body.pv #exitpv{display:block}
 #notices{position:absolute;left:0;right:0;margin:0 auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-width:calc(100% - 200px);display:flex;flex-direction:column;align-items:center;gap:6px;z-index:8;pointer-events:none}
 .nt{font-size:13px;font-weight:600;color:#fff;padding:6px 16px;border:1.5px solid rgba(255,255,255,.7);border-radius:999px;background:rgba(0,0,0,.6);opacity:0;transition:opacity .5s}
 .nt.show{opacity:.9}.nt.show.back{opacity:.4}.nt.gone{opacity:0!important}.up{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+#ending{position:absolute;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:0 26px;gap:18px;opacity:0;z-index:6;pointer-events:none}
+#endT{font-family:"Marck Script","Segoe Script",cursive;font-weight:400;-webkit-text-stroke:0;font-size:42px;white-space:pre-line;text-shadow:0 0 18px rgba(255,255,255,.4)}
+#endX{font-size:19px;font-weight:600;-webkit-text-stroke:0;opacity:.85;white-space:pre-line}
+.bar{flex-wrap:wrap;gap:6px}.lf{display:flex;align-items:center;gap:8px}.lf input{width:20px;height:20px}
+#table{position:absolute;inset:0;z-index:4;opacity:0;overflow:hidden;background:radial-gradient(ellipse at 50% 40%,#5d3d24,#2b1b0f 70%,#120a05)}
+.pol{position:absolute;left:50%;top:44%;width:min(74%,340px);margin-left:calc(min(74%,340px) / -2);background:#f4f1ea;padding:10px 10px 8px;border-radius:3px;box-shadow:0 10px 26px rgba(0,0,0,.65);transition:transform 1s cubic-bezier(.2,.8,.3,1),opacity .4s,filter 1s}
+.pol img{display:block;margin:0 auto;max-width:100%;max-height:44vh}
+.cap{font-family:"Marck Script","Segoe Script",cursive;color:#222;font-size:19px;text-align:center;padding-top:8px;min-height:30px}
 </style>
 </head>
 <body>
@@ -80,6 +88,7 @@ body.pv #exitpv{display:block}
   <img class="photo" id="pA" alt=""><img class="photo" id="pB" alt="">
   <div id="veil"></div>
   <div class="lid" id="lidT"></div><div class="lid" id="lidB"></div>
+  <div id="table"></div>
   <div id="title" class="txt"></div>
   <div id="ring" class="txt"></div>
   <div id="center" class="txt"></div>
@@ -87,6 +96,7 @@ body.pv #exitpv{display:block}
   <div id="list"><h3>Собрать вещи:</h3><div id="items"></div></div>
   <div id="btns"></div>
   <div id="clock" class="txt"></div><div id="notices"></div>
+  <div id="ending"><div id="endT" class="txt"></div><div id="endX" class="txt"></div></div>
   <button id="invbtn">🎒 Инвентарь</button>
   <div id="invd"></div>
   <div id="invp"><h3>Инвентарь</h3><div id="invl"></div><button id="invx">Закрыть</button></div>
@@ -291,6 +301,30 @@ async function photo(s){
   else if(fx==='fadeblack'){await fade(1,1500);await setPhoto(n,0);await fade(0,1500)}
   else await setPhoto(n,1800);
 }
+async function tableShow(cards){
+  const T=$('table');T.innerHTML='';T.style.transition='opacity 1.5s';T.style.opacity=1;await sleep(1600);
+  let prev=null;
+  for(const c of cards){
+    const d=document.createElement('div');d.className='pol';
+    const im=document.createElement('img');im.src=url('foto'+(+c.n)+'.jpg');
+    const cp=document.createElement('div');cp.className='cap';cp.textContent=c.text||'';
+    d.append(im,cp);
+    const r=Math.random()*14-7,dx=Math.random()*40-20,dy=Math.random()*30-15;
+    d.style.transform=`translate(${dx}px,-130vh) rotate(${r*3}deg) scale(1.3)`;d.style.opacity=0;
+    T.appendChild(d);if(prev)prev.style.filter='brightness(.7)';
+    await raf();
+    d.style.transform=`translate(${dx}px,calc(${dy}px - 50%)) rotate(${r}deg)`;d.style.opacity=1;
+    prev=d;
+    const a=c.audio?new Audio(LOCAL[c.audio]||c.audio):null;if(a)a.play().catch(()=>{});
+    await new Promise(res=>{
+      let done=false;const fin=()=>{if(!done){done=true;skip=null;res()}};
+      if(a){a.onended=fin;a.onerror=()=>setTimeout(fin,2500)}
+      const t0=Date.now();skip=()=>{if(Date.now()-t0>700)fin()};
+      setTimeout(fin,a?40000:2200+(c.text||'').length*70)});
+    if(a)a.pause();
+    await sleep(500);
+  }
+}
 async function doStep(s,id){
   switch(s.type){
   case 'title':{const T=$('title');T.textContent=s.text;T.style.opacity=1;await sleep(4000);T.style.opacity=0;await sleep(2500);break}
@@ -325,6 +359,17 @@ async function doStep(s,id){
     const n=(s.name||'').trim(),a=isAct(n),hv=invFind(n)>=0;
     const ok=s.cond==='notactive'?!a:s.cond==='have'?hv:a;
     await runSteps((ok?s.then:s.else)||[],id);break}
+  case 'ending':{
+    await fade(1,2500);await clearLines();
+    if(!lidsOpen)await lids(1,0);
+    const E=$('ending'),tbl=s.mode==='table'&&(s.cards||[]).length;
+    if(tbl)await tableShow(s.cards);
+    else if(s.bg){await setPhoto(+s.bg,0);await fade(.55,2000)}
+    E.style.background=tbl?'rgba(0,0,0,.55)':'';
+    $('endT').textContent=s.title||'Конец';$('endX').textContent=s.text||'';
+    E.style.transition='opacity 2s';E.style.opacity=1;await sleep(2500);
+    if(s.restart){await ask(['Начать заново'],'center');startGame(0)}
+    await new Promise(()=>{});break}
   case 'choice':{
     const o=s.options||[];let idx=o.map((_,i)=>i);
     while(idx.length){
@@ -345,7 +390,7 @@ function resetStage(){
   $('lines').innerHTML='';$('btns').innerHTML='';
   ['title','ring','center'].forEach(i=>$(i).style.opacity=0);
   $('list').classList.remove('show');
-  inv=[];act=[];invOn=false;$('invp').style.display='none';$('invd').style.display='none';$('notices').innerHTML='';showClock('');updInv();
+  inv=[];act=[];invOn=false;$('invp').style.display='none';$('invd').style.display='none';$('notices').innerHTML='';$('ending').style.transition='none';$('ending').style.opacity=0;$('ending').style.background='';$('table').style.transition='none';$('table').style.opacity=0;$('table').innerHTML='';showClock('');updInv();
 }
 async function startGame(from=0){
   const id=++runId;resetStage();
@@ -365,7 +410,7 @@ async function loadStory(){
   catch(e){st=JSON.parse(JSON.stringify(DEFAULT))}
   return st;
 }
-function preload(steps){steps.forEach(s=>{if(s.type==='photo')new Image().src=PHOTO_DIR+'foto'+(+s.n)+'.jpg';(s.options||[]).forEach(o=>preload(o.steps||[]))})}
+function preload(steps){steps.forEach(s=>{if(s.cards)preload(s.cards);if(s.then)preload(s.then);if(s.else)preload(s.else);if(s.type==='photo'||s.type==='card')new Image().src=PHOTO_DIR+'foto'+(+s.n)+'.jpg';(s.options||[]).forEach(o=>preload(o.steps||[]))})}
 
 /* ---------- РЕДАКТОР (открывается по адресу ...?edit) ---------- */
 const h=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
@@ -385,17 +430,22 @@ const TYPES={
  inv:{name:'🎒 Инвентарь',f:[['action','Действие','sel',[['add','Добавить предмет / задать его данные'],['activate','Активировать (предмет исчезнет из инвентаря)'],['deactivate','Сделать неактивированным'],['remove','Убрать предмет']]],['name','Название предмета (например: часы)','text'],['photo','Фото предмета','img'],['desc','Описание при рассматривании','area'],['can','Кнопка «Активировать» в просмотре','sel',[['','Без кнопки'],['1','Есть кнопка']]],['actText','Надпись в овале, когда игрок нажмёт «Активировать»','text'],['actSec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['text','Надпись в овале на этом шаге (например: Часы добавлены в инвентарь)','text'],['sec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'inv',action:'add',name:'',photo:'',desc:'',can:'',actText:'',text:'',wait:'1'})},
  if:{name:'❓ Если предмет…',f:[['name','Название предмета (например: часы)','text'],['cond','Условие','sel',[['active','Предмет активирован'],['notactive','Предмет НЕ активирован'],['have','Предмет сейчас в инвентаре']]]],d:()=>({type:'if',name:'',cond:'active',then:[],else:[]})},
  notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['sec','Сколько секунд показывать (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
+ ending:{name:'🏁 Концовка',f:[['mode','Вид концовки','sel',[['plain','Обычная (название и текст)'],['table','Фотографии на столе (как из фотоаппарата)']]],['bg','Фото на фоне (для обычной, необязательно)','fotonum'],['title','Название концовки (например: Концовка 1: Дом)','text'],['text','Текст под названием (необязательно)','area'],['restart','Кнопка после концовки','sel',[['1','«Начать заново»'],['','Без кнопки']]]],d:()=>({type:'ending',mode:'plain',bg:'',title:'',text:'',restart:'1',cards:[]})},
+ card:{name:'📷 Фотография на столе',hid:1,f:[['n','Номер фото','fotonum'],['text','Подпись под фото','text'],['audio','Голос (необязательно)','audio']],d:()=>({type:'card',n:'',text:'',audio:''})},
  choice:{name:'🔀 Выбор',f:[],d:()=>({type:'choice',options:[{label:'',back:'',steps:[]},{label:'',back:'',steps:[]}]})}
 };
+const SEL=new Set();let CLIP=JSON.parse(localStorage.getItem('clip')||'[]');
 const eSt=t=>$('eSt').textContent=t;
 const changed=()=>{localStorage.setItem('draft',JSON.stringify(story));eSt('Черновик сохранён в этом браузере. Нажми «Сохранить для всех».')};
 function redraw(){const y=$('editor').scrollTop;$('eL').innerHTML='';renderList(story.steps,$('eL'),true);$('editor').scrollTop=y}
-function renderList(steps,parent,top){
+function renderList(steps,parent,top,kinds){
   steps.forEach((s,i)=>{
     const T=TYPES[s.type],c=h('div','card'),bar=h('div','bar'),ctr=h('span','ctr');
-    bar.append(h('b','',(top?(i+1)+'. ':'')+T.name));
+    const cb=h('input');cb.type='checkbox';cb.checked=SEL.has(s);cb.onchange=()=>{cb.checked?SEL.add(s):SEL.delete(s)};
+    const lf=h('span','lf');lf.append(cb,h('b','',(top?(i+1)+'. ':'')+T.name));bar.append(lf);
     const bt=(l,fn)=>{const b=h('button','',l);b.onclick=fn;ctr.append(b)};
     if(top)bt('▶',()=>{document.body.className='edit pv';startGame(i)});
+    bt('⧉',()=>{steps.splice(i+1,0,JSON.parse(JSON.stringify(s)));changed();redraw()});
     bt('↑',()=>{if(i>0){[steps[i-1],steps[i]]=[steps[i],steps[i-1]];changed();redraw()}});
     bt('↓',()=>{if(i<steps.length-1){[steps[i+1],steps[i]]=[steps[i],steps[i+1]];changed();redraw()}});
     bt('✕',()=>{if(confirm('Удалить этот блок?')){steps.splice(i,1);changed();redraw()}});
@@ -412,13 +462,21 @@ function renderList(steps,parent,top){
         ob.append(del);c.append(ob)});
       const add=h('button','add','+ Ещё вариант');add.onclick=()=>{s.options.push({label:'',back:'',steps:[]});changed();redraw()};c.append(add);
     }
+    if(s.type==='ending'){s.cards=s.cards||[];c.append(h('div','sub','Фотографии на столе — по порядку, каждая ложится на предыдущую (нужен вид «Фотографии на столе»):'));const n=h('div','nest');renderList(s.cards,n,false,['card']);c.append(n)}
     if(s.type==='if'){[['then','Тогда:'],['else','Иначе (необязательно):']].forEach(([k,l])=>{s[k]=s[k]||[];c.append(h('div','sub',l));const n=h('div','nest');renderList(s[k],n,false);c.append(n)})}
     parent.append(c);
   });
   const row=h('div','addrow'),sel=h('select');
-  Object.keys(TYPES).forEach(k=>{const o=h('option','',TYPES[k].name);o.value=k;sel.append(o)});
+  (kinds||Object.keys(TYPES).filter(k=>!TYPES[k].hid)).forEach(k=>{const o=h('option','',TYPES[k].name);o.value=k;sel.append(o)});
   const b=h('button','add','+ Добавить');b.onclick=()=>{steps.push(TYPES[sel.value].d());changed();redraw()};
   row.append(sel,b);parent.append(row);
+  const r2=h('div','addrow');
+  const cp=h('button','','📋 Копировать отмеченные');
+  cp.onclick=()=>{const g=steps.filter(x=>SEL.has(x));if(!g.length){eSt('Сначала отметь галочками нужные блоки.');return}
+    CLIP=g.map(x=>JSON.parse(JSON.stringify(x)));localStorage.setItem('clip',JSON.stringify(CLIP));g.forEach(x=>SEL.delete(x));redraw();eSt('Скопировано блоков: '+CLIP.length+'. Открой нужное место и нажми «Вставить».')};
+  const ps=h('button','','📥 Вставить ('+CLIP.length+')');
+  ps.onclick=()=>{if(!CLIP.length){eSt('Сначала скопируй блоки.');return}CLIP.forEach(x=>steps.push(JSON.parse(JSON.stringify(x))));changed();redraw()};
+  r2.append(cp,ps);parent.append(r2);
 }
 function ghAuth(){
   const m=location.hostname.match(/^(.+)\.github\.io$/);
