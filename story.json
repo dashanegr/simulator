@@ -12,27 +12,32 @@
   {
    "type": "say",
    "text": "— Гоша, ты опять напился?!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos6.wav"
   },
   {
    "type": "say",
    "text": "— Да не пил я!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos7.wav"
   },
   {
    "type": "say",
    "text": "— А ну дыхни.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos8.wav"
   },
   {
    "type": "say",
    "text": "— Ой, смотри, что это?",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos9.wav"
   },
   {
    "type": "say",
    "text": "— Что?",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos10.wav"
   },
   {
    "type": "blink"
@@ -40,12 +45,14 @@
   {
    "type": "say",
    "text": "— Да это же ребёнок!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos11.wav"
   },
   {
    "type": "say",
    "text": "— Привет, сахарок ☺️",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos12.wav"
   },
   {
    "type": "photo",
@@ -55,12 +62,14 @@
   {
    "type": "say",
    "text": "— А сахарок-то подгоревший 😏",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos13.wav"
   },
   {
    "type": "say",
    "text": "— Да помолчи ты!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos14.wav"
   },
   {
    "type": "veil",
@@ -83,27 +92,32 @@
   {
    "type": "say",
    "text": "— С днём рождения! Это Олег, хорошо ухаживай за ним.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos15.wav"
   },
   {
    "type": "say",
    "text": "— Укх бу юа бы эт",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos16.wav"
   },
   {
    "type": "say",
    "text": "— Что ты делаешь?",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos17.wav"
   },
   {
    "type": "say",
    "text": "— Перевожу это на её язык, чтобы ей было понятнее.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos18.wav"
   },
   {
    "type": "say",
    "text": "— *вздох разочарования в идиоте*",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos19.wav"
   },
   {
    "type": "veil",
@@ -126,12 +140,14 @@
   {
    "type": "say",
    "text": "— Поздравляю с 10-летием, уголёк! Расти большой, чтобы легко доставать до самых высоких пальм с кокосами!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos20.wav"
   },
   {
    "type": "say",
    "text": "— Не слушай папу, солнышко, у этой пьяни все мозги уже пропиты.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos23.wav"
   },
   {
    "type": "veil",
@@ -154,7 +170,8 @@
   {
    "type": "say",
    "text": "— С 15-летием, Дашулепулешушечучечка! Ты уже такая большая 😢 Держи подарок, скоро торт начнём резать!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos24.wav"
   },
   {
    "type": "button",
@@ -169,12 +186,14 @@
   {
    "type": "say",
    "text": "— Спасибо, я отнесу его в комнату?",
-   "who": "me"
+   "who": "me",
+   "audio": "golos25.wav"
   },
   {
    "type": "say",
    "text": "— Да, конечно.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos26.wav"
   },
   {
    "type": "button",
@@ -197,6 +216,12 @@
    "fx": "fade"
   },
   {
+   "type": "say",
+   "text": "",
+   "who": "npc",
+   "audio": "golos28.wav"
+  },
+  {
    "type": "call",
    "text": "*звонок*",
    "label": "Взять трубку"
@@ -209,27 +234,32 @@
   {
    "type": "say",
    "text": "— Дарья Дмитриевна?",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos29.wav"
   },
   {
    "type": "say",
    "text": "— Да, а вы кто?",
-   "who": "me"
+   "who": "me",
+   "audio": "golos31.wav"
   },
   {
    "type": "say",
    "text": "— Машина ждёт вас внизу.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos32.wav"
   },
   {
    "type": "say",
    "text": "— Меня? Зачем?",
-   "who": "me"
+   "who": "me",
+   "audio": "golos33.wav"
   },
   {
    "type": "say",
    "text": "— Без вопросов, просто садитесь.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos34.wav"
   },
   {
    "type": "photo",
