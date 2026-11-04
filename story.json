@@ -13,31 +13,31 @@
    "type": "say",
    "text": "— Гоша, ты опять напился?!",
    "who": "npc",
-   "audio": "golos6.wav"
+   "audio": "golos58.wav"
   },
   {
    "type": "say",
    "text": "— Да не пил я!",
    "who": "npc",
-   "audio": "golos7.wav"
+   "audio": "golos59.wav"
   },
   {
    "type": "say",
    "text": "— А ну дыхни.",
    "who": "npc",
-   "audio": "golos8.wav"
+   "audio": "golos63.wav"
   },
   {
    "type": "say",
    "text": "— Ой, смотри, что это?",
    "who": "npc",
-   "audio": "golos9.wav"
+   "audio": "golos60.wav"
   },
   {
    "type": "say",
    "text": "— Что?",
    "who": "npc",
-   "audio": "golos10.wav"
+   "audio": "golos64.wav"
   },
   {
    "type": "blink"
@@ -46,13 +46,13 @@
    "type": "say",
    "text": "— Да это же ребёнок!",
    "who": "npc",
-   "audio": "golos11.wav"
+   "audio": "golos61.wav"
   },
   {
    "type": "say",
    "text": "— Привет, сахарок ☺️",
    "who": "npc",
-   "audio": "golos12.wav"
+   "audio": "golos65.wav"
   },
   {
    "type": "photo",
@@ -63,13 +63,13 @@
    "type": "say",
    "text": "— А сахарок-то подгоревший 😏",
    "who": "npc",
-   "audio": "golos13.wav"
+   "audio": "golos62.wav"
   },
   {
    "type": "say",
    "text": "— Да помолчи ты!",
    "who": "npc",
-   "audio": "golos14.wav"
+   "audio": "golos66.wav"
   },
   {
    "type": "veil",
@@ -93,31 +93,31 @@
    "type": "say",
    "text": "— С днём рождения! Это Олег, хорошо ухаживай за ним.",
    "who": "npc",
-   "audio": "golos15.wav"
+   "audio": "golos67.wav"
   },
   {
    "type": "say",
    "text": "— Укх бу юа бы эт",
    "who": "npc",
-   "audio": "golos16.wav"
+   "audio": "golos68.wav"
   },
   {
    "type": "say",
    "text": "— Что ты делаешь?",
    "who": "npc",
-   "audio": "golos17.wav"
+   "audio": "golos69.wav"
   },
   {
    "type": "say",
    "text": "— Перевожу это на её язык, чтобы ей было понятнее.",
    "who": "npc",
-   "audio": "golos18.wav"
+   "audio": "golos71.wav"
   },
   {
    "type": "say",
    "text": "— *вздох разочарования в идиоте*",
    "who": "npc",
-   "audio": "golos19.wav"
+   "audio": "golos70.wav"
   },
   {
    "type": "veil",
@@ -147,7 +147,7 @@
    "type": "say",
    "text": "— Не слушай папу, солнышко, у этой пьяни все мозги уже пропиты.",
    "who": "npc",
-   "audio": "golos23.wav"
+   "audio": "golos73.wav"
   },
   {
    "type": "veil",
@@ -171,7 +171,7 @@
    "type": "say",
    "text": "— С 15-летием, Дашулепулешушечучечка! Ты уже такая большая 😢 Держи подарок, скоро торт начнём резать!",
    "who": "npc",
-   "audio": "golos24.wav"
+   "audio": "golos74.wav"
   },
   {
    "type": "button",
@@ -406,12 +406,14 @@
   {
    "type": "say",
    "text": "— Приехали.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos36.wav"
   },
   {
    "type": "say",
    "text": "—Ай, что это?",
-   "who": "me"
+   "who": "me",
+   "audio": "golos37.wav"
   },
   {
    "type": "notice",
@@ -478,27 +480,32 @@
   {
    "type": "say",
    "text": "— Здравствуйте.",
-   "who": "me"
+   "who": "me",
+   "audio": "golos38.wav"
   },
   {
    "type": "say",
    "text": "— Принимаем только по талону.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos41.wav"
   },
   {
    "type": "say",
    "text": "— А где его получить?",
-   "who": "me"
+   "who": "me",
+   "audio": "golos42.wav"
   },
   {
    "type": "say",
    "text": "* пристально смотрит на вас *",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos44.wav"
   },
   {
    "type": "say",
    "text": "— Держите, вы номер Э17962",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos45.wav"
   },
   {
    "type": "inv",
@@ -550,12 +557,14 @@
   {
    "type": "say",
    "text": "— Талон.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos47.wav"
   },
   {
    "type": "say",
    "text": "— Держите.",
-   "who": "me"
+   "who": "me",
+   "audio": "golos48.wav"
   },
   {
    "type": "inv",
@@ -572,12 +581,14 @@
   {
    "type": "say",
    "text": "— Прямо 3 поворота, направо, 2 поворота налево, поворот на 67 градусов направо, налево, три поворота прямо,поворот вверх, развернуться идти назад 15 поворотов прямо, налево, третья дверь справа.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos50.wav"
   },
   {
    "type": "say",
    "text": "— 😑",
-   "who": "me"
+   "who": "me",
+   "audio": "golos51.wav"
   },
   {
    "type": "choice",
@@ -720,22 +731,22 @@
          "type": "card",
          "n": "32",
          "text": "Вы заблудились в коридоре и встретили горилу с головой крокодила, ничего лучше не придумал вы начали ему петь песенку бомбордила крокодила",
-         "audio": "",
-         "sec": "6"
+         "audio": "golos52.wav",
+         "sec": "14"
         },
         {
          "type": "card",
          "n": "",
-         "text": "Ему так понравилась ваша песня, что он тот час же влюбился и у вас родилось 3 кроколдёнка горилёнка",
-         "audio": "",
-         "sec": "6"
+         "text": "Ему так понравилась ваша песня, что он тот час же влюбился и у вас родилось 3 кроколдёнка горелёнка негритёнка.",
+         "audio": "golos54.wav",
+         "sec": "10"
         },
         {
          "type": "card",
          "n": "",
          "text": "Но когда они проголодались они съели вас, ваш муж похоронил вас под ту самую песенку что вы спели ему при первой встрече.",
-         "audio": "",
-         "sec": "5"
+         "audio": "golos56.wav",
+         "sec": "14"
         }
        ]
       }
