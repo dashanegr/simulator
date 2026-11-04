@@ -145,7 +145,13 @@ function hold(ms){return new Promise(res=>{const t=setTimeout(done,ms);const t0=
   function done(){clearTimeout(t);skip=null;res()}
   skip=()=>{if(Date.now()-t0>500)done()}})}
 async function say(text,cls='',audio){
-  if(audio){try{new Audio(LOCAL[audio]||audio).play().catch(()=>{})}catch(e){}}
+  let au=null,dur=0;
+  if(audio){try{
+    au=new Audio(LOCAL[audio]||audio);au.preload='auto';
+    if(!(au.duration>0&&isFinite(au.duration)))await new Promise(r=>{au.onloadedmetadata=r;au.onerror=r;setTimeout(r,1500)});
+    if(au.duration>0&&isFinite(au.duration))dur=au.duration;
+    au.play().catch(()=>{});
+  }catch(e){au=null}}
   const box=$('lines');
   const f=box.querySelector('.front'),b=box.querySelector('.back:not(.gone)');
   if(b){b.classList.add('gone');setTimeout(()=>b.remove(),800)}
@@ -159,6 +165,22 @@ async function say(text,cls='',audio){
   box.appendChild(el);await raf();el.classList.add('show');
   const ch=Array.from(text);
   let fast=false;skip=()=>{fast=true};
+  const t0=Date.now();
+  if(dur){
+    // текст печатается ровно под голос: последняя буква — к концу записи
+    const w=ch.map(c=>/[.!?…]/.test(c)?7:/[,:;—-]/.test(c)?3.5:1),W=w.reduce((x,y)=>x+y,0)||1;
+    let cum=0;
+    for(let i=1;i<=ch.length;i++){
+      cum+=w[i-1];
+      vis.textContent=ch.slice(0,i).join('');
+      hid.textContent=ch.slice(i).join('');
+      if(!fast&&i<ch.length){const wait=t0+cum/W*dur*1000*.96-Date.now();if(wait>0)await sleep(wait)}
+    }
+    // текст остаётся, пока голос не договорит
+    await hold(Math.max(250,dur*1000-(Date.now()-t0))+350);
+    if(au)au.pause();
+    return;
+  }
   for(let i=1;i<=ch.length;i++){
     vis.textContent=ch.slice(0,i).join('');
     hid.textContent=ch.slice(i).join('');
