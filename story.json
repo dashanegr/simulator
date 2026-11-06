@@ -17,12 +17,16 @@
    "align": "end"
   },
   {
+   "type": "veil",
+   "to": "1"
+  },
+  {
    "type": "title",
    "text": "Акт 1:\nНачало"
   },
   {
    "type": "photo",
-   "n": "1",
+   "n": "40",
    "fx": "hidden"
   },
   {
@@ -54,6 +58,10 @@
    "text": "— Что?",
    "who": "npc",
    "audio": "golos64.wav"
+  },
+  {
+   "type": "veil",
+   "to": "0"
   },
   {
    "type": "blink"
