@@ -1,6 +1,22 @@
 {
  "steps": [
   {
+   "type": "photo",
+   "n": "39",
+   "fx": "fade"
+  },
+  {
+   "type": "notice",
+   "text": "",
+   "wait": "1",
+   "sec": "7"
+  },
+  {
+   "type": "button",
+   "label": "Понятно",
+   "align": "end"
+  },
+  {
    "type": "title",
    "text": "Акт 1:\nНачало"
   },
