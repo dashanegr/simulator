@@ -138,6 +138,7 @@ body.pv #exitpv{display:block}
 .chm{flex:1;min-width:0;display:flex;flex-direction:column}
 .cht{flex:none;padding:8px 10px;font:800 14px Tahoma,sans-serif;background:#e8eefb;border-bottom:1px solid #aab}
 .chb{flex:1;min-height:0;overflow-y:auto;padding:8px;background:#dfe7f3;display:flex;flex-direction:column;gap:7px;touch-action:pan-y}
+.chn{display:none;position:relative;flex:none;margin:-34px auto 6px;z-index:2;font:700 12px Tahoma,sans-serif;color:#fff;background:#2a6fdb;border:1px solid #fff;border-radius:14px;padding:6px 12px;box-shadow:0 2px 6px rgba(0,0,0,.4)}
 .chf{flex:none;padding:7px 10px;font-size:12px;color:#777;background:#f2f2f2;border-top:1px solid #aab}
 .msg{display:flex;gap:6px;align-items:flex-end;animation:mpop .25s}
 .msg .av{width:30px;height:30px;flex:none}
@@ -485,8 +486,10 @@ function chatAdvance(c){
 }
 function openChat(body){
   const C=PC.chats;let cur=C[0];
-  body.innerHTML='<div class="ch2"><div class="chl"></div><div class="chm"><div class="cht"></div><div class="chb"></div><div class="chf">Только чтение</div></div></div>';
-  const L=body.querySelector('.chl'),T=body.querySelector('.cht'),B=body.querySelector('.chb');
+  body.innerHTML='<div class="ch2"><div class="chl"></div><div class="chm"><div class="cht"></div><div class="chb"></div><button class="chn">↓ Новые сообщения</button><div class="chf">Только чтение</div></div></div>';
+  const L=body.querySelector('.chl'),T=body.querySelector('.cht'),B=body.querySelector('.chb'),nw=body.querySelector('.chn');
+  nw.onclick=()=>{B.scrollTop=B.scrollHeight;nw.style.display='none'};
+  B.addEventListener('scroll',()=>{if(B.scrollHeight-B.scrollTop-B.clientHeight<40)nw.style.display='none'});
   const bubble=m=>{
     const d=document.createElement('div');
     if(m.sys){d.className='sysm';d.textContent=m.t;return d}
@@ -498,7 +501,7 @@ function openChat(body){
     r.innerHTML=AV(c.av)+'<div class="t"><div class="n"></div><div class="p"></div></div>'+(c.unread&&c!==cur?'<i class="bdg">'+c.unread+'</i>':'');
     r.querySelector('.n').textContent=c.name;r.querySelector('.p').textContent=last?last.t:'';
     r.onclick=()=>{cur=c;c.unread=0;show()};L.appendChild(r)})};
-  const show=()=>{T.textContent=cur.name;B.innerHTML='';cur.msgs.slice(-40).forEach(m=>B.appendChild(bubble(m)));B.scrollTop=B.scrollHeight;list()};
+  const show=()=>{T.textContent=cur.name;B.innerHTML='';cur.msgs.slice(-40).forEach(m=>B.appendChild(bubble(m)));B.scrollTop=B.scrollHeight;nw.style.display='none';list()};
   show();
   let n=0;
   const iv=setInterval(()=>{
@@ -506,7 +509,11 @@ function openChat(body){
     C.forEach(c=>{
       if(c!==cur&&n%2)return;
       const ms=chatAdvance(c);
-      if(c===cur){ms.forEach(m=>B.appendChild(bubble(m)));while(B.children.length>60)B.removeChild(B.firstChild);B.scrollTop=B.scrollHeight}
+      if(c===cur){
+        const atEnd=B.scrollHeight-B.scrollTop-B.clientHeight<40;
+        ms.forEach(m=>B.appendChild(bubble(m)));
+        if(atEnd){while(B.children.length>60)B.removeChild(B.firstChild);B.scrollTop=B.scrollHeight}
+        else if(ms.length)nw.style.display='block'}
       else c.unread+=ms.length;
     });
     list();
