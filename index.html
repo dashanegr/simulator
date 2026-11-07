@@ -461,7 +461,7 @@ const CHK=id=>{if(id!==runId)throw 'abort'};
 async function runSteps(steps,id){for(const s of steps){CHK(id);await doStep(s,id);CHK(id)}}
 async function photo(s){
   const n=+s.n,fx=s.fx||'fade';
-  if(fx==='hidden'){await setPhoto(n,0);return}
+  if(fx==='hidden'){if(lidsOpen)await lids(0,450);await setPhoto(n,0);return}
   if(fx==='shortblink'){await shortBlink(n);return}
   await clearLines();
   if(!lidsOpen)await lids(1,0);
