@@ -30,6 +30,9 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 #btns{position:absolute;left:0;right:0;top:55%;display:flex;gap:10px;z-index:7;padding:0 14px}
 #btns.end{justify-content:flex-end;padding:0 10px 0 0;top:calc(77% + 20px)}
 #btns.center{justify-content:center}
+#btns.corner{left:0;right:0;top:auto;bottom:calc(23% - 72px);flex-direction:column;align-items:flex-end;padding:0 10px 0 0;gap:8px;max-height:62%;overflow-y:auto}
+#btns.corner .btn{max-width:82%}
+#btns.cust{right:auto;padding:0;transform:translate(-50%,-50%);flex-direction:column;align-items:stretch;width:max-content;max-width:88%;gap:8px;max-height:80%;overflow-y:auto}
 #btns.col{flex-direction:column;top:auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-height:62%;overflow-y:auto;overscroll-behavior:contain;padding:4px 14px;gap:8px}
 #btns.col .btn{flex:none;width:100%;font-size:15px;padding:11px 12px;text-align:center}
 .btn{font:700 17px system-ui,sans-serif;color:#fff;background:rgba(20,20,20,.78);border:2px solid rgba(255,255,255,.85);padding:13px 22px;border-radius:14px;opacity:0;transition:opacity 1s}
@@ -58,6 +61,14 @@ body.pv #exitpv{display:block}
 .ctr button{padding:6px 10px;margin-left:4px}
 .fld{display:block;margin:8px 0}.fld span{display:block;font-size:12px;color:#aaa;margin-bottom:3px}
 .fld input,.fld textarea,.fld select{width:100%;background:#111;color:#fff;border:1px solid #555;border-radius:8px;padding:9px;font:15px system-ui}
+.pmap{position:relative;width:170px;aspect-ratio:9/18;margin:6px 0;background:#050505;border:2px solid #666;border-radius:14px;overflow:hidden;touch-action:none;user-select:none;-webkit-user-select:none}
+.pmap i{position:absolute;pointer-events:none;background:rgba(255,255,255,.18)}
+.pmap .gx{left:50%;top:0;bottom:0;width:1px}.pmap .gy{top:50%;left:0;right:0;height:1px}
+.pmap.sx .gx{background:#4ade80;width:2px}.pmap.sy .gy{background:#4ade80;height:2px}
+.pmap .pdot{position:absolute;transform:translate(-50%,-50%);display:flex;flex-direction:column;gap:3px;pointer-events:none}
+.pmap .pdot b{display:block;min-width:64px;padding:5px 8px;font:700 9px system-ui;color:#fff;text-align:center;background:rgba(20,20,20,.9);border:1.5px solid #fff;border-radius:8px}
+.pmap .pz{position:absolute;left:0;right:0;text-align:center;font:10px system-ui;color:#777;pointer-events:none}
+.pmx{font-size:12px;color:#aaa;margin:2px 0 6px}
 .opt{border:1px dashed #666;border-radius:10px;padding:8px;margin:10px 0}
 .nest{margin-left:6px;border-left:3px solid #4a6;padding-left:8px}.sub{font-size:12px;color:#aaa;margin-top:6px}
 .addrow{display:flex;gap:6px;margin:10px 0}.addrow select{flex:1}
@@ -281,16 +292,29 @@ async function centerText(t,ms=3500){
 
 /* ---------- кнопки ---------- */
 // align: 'end' (прижата вправо), 'center', 'row' (несколько в ряд)
-function ask(labels,align='end'){
+function ask(labels,align='end',P){
   return new Promise(async res=>{
-    if(align==='row'&&labels.length>2)align='col';
-    const w=$('btns');w.className=align;w.innerHTML='';w.scrollTop=0;
+    let cust=null;
+    if(P&&P.pos==='custom'&&isFinite(parseFloat(P.px))&&isFinite(parseFloat(P.py)))cust={x:parseFloat(P.px),y:parseFloat(P.py)};
+    else if(P&&P.pos==='end')align=labels.length>1?'corner':'end';
+    else if(P&&P.pos==='center'&&align==='end')align='center';
+    if(!cust&&align==='row'&&labels.length>2)align='col';
+    const w=$('btns');w.className=cust?'cust':align;w.removeAttribute('style');w.innerHTML='';w.scrollTop=0;
+    if(cust){w.style.left=cust.x+'%';w.style.top=cust.y+'%'}
     const bs=labels.map((l,i)=>{
       const b=document.createElement('button');b.className='btn';b.textContent=l;
       b.addEventListener('pointerdown',e=>e.stopPropagation());
       b.addEventListener('click',async()=>{
         bs.forEach(x=>x.classList.remove('show'));await sleep(500);w.innerHTML='';res(i)});
       w.appendChild(b);return b});
+    if(cust){
+      // не даём блоку кнопок выйти за края экрана
+      const S=$('stage').getBoundingClientRect(),r=w.getBoundingClientRect(),m=8;let dx=0,dy=0;
+      if(r.left<S.left+m)dx=S.left+m-r.left;else if(r.right>S.right-m)dx=S.right-m-r.right;
+      if(r.top<S.top+m)dy=S.top+m-r.top;else if(r.bottom>S.bottom-m)dy=S.bottom-m-r.bottom;
+      if(dx)w.style.left='calc('+cust.x+'% + '+dx+'px)';
+      if(dy)w.style.top='calc('+cust.y+'% + '+dy+'px)';
+    }
     await raf();bs.forEach(b=>b.classList.add('show'));
   });
 }
@@ -727,7 +751,7 @@ async function doStep(s,id){
   case 'photo':await photo(s);break;
   case 'veil':await fade(+s.to,2500);if(+s.to===1)await clearLines();break;
   case 'blink':await blinkOpen();break;
-  case 'button':await ask([s.label||'Далее'],s.align||'end');await clearLines();break;
+  case 'button':await ask([s.label||'Далее'],s.align||'end',s);await clearLines();break;
   case 'call':{
     const R=$('ring');R.style.top='55%';R.textContent=s.text||'*звонок*';R.style.opacity=1;
     await sleep(1300);R.style.top='46%';
@@ -780,7 +804,7 @@ async function doStep(s,id){
       const av=idx.filter(i=>optOk(o[i]));
       if(!av.length)break;
       const labels=av.map(i=>o[i].label);
-      const k=await ask(labels,labels.length>1?'row':'center');CHK(id);
+      const k=await ask(labels,labels.length>1?'row':'center',s);CHK(id);
       const op=o[av[k]];
       await runSteps(op.steps||[],id);
       if(op.back&&av.length>1)idx.splice(idx.indexOf(av[k]),1);else break}
@@ -829,7 +853,7 @@ const TYPES={
  photo:{name:'🖼 Фото',f:[['n','Номер фото','fotonum'],['fx','Как появляется','sel',FX]],d:()=>P(1,'fade')},
  veil:{name:'🌗 Затемнение / осветление',f:[['to','Что сделать','sel',[['1','Затемнить экран'],['0','Осветлить экран']]]],d:()=>V(1)},
  blink:{name:'👁 Открыть глаза (моргание)',f:[],d:()=>({type:'blink'})},
- button:{name:'🔘 Кнопка',f:[['label','Надпись','text'],['align','Где','sel',AL]],d:()=>B()},
+ button:{name:'🔘 Кнопка',f:[['label','Надпись','text'],['pos','Где кнопка','pos']],d:()=>B()},
  call:{name:'📞 Звонок',f:[['text','Надпись','text'],['label','Кнопка','text']],d:()=>({type:'call',text:'*звонок*',label:'Взять трубку'})},
  checklist:{name:'☑️ Список вещей',f:[['title','Заголовок','text'],['items','Пункты (каждый с новой строки)','lines'],['label','Кнопка','text']],d:()=>({type:'checklist',title:'',items:[],label:'Далее'})},
  clock:{name:'🕒 Время в углу',f:[['text','Что показывать (например 14:30). Пусто — спрятать','text']],d:()=>({type:'clock',text:''})},
@@ -841,7 +865,7 @@ const TYPES={
  computer:{name:'💻 Компьютер',f:[['pass','Пароль для папки «Засекречено»','text'],['secret','Что показать внутри «Засекречено» после ввода пароля','area']],d:()=>({type:'computer',pass:'ХлопокВанЛав',secret:'Здесь пока пусто. Но скоро здесь что-то появится.'})},
  ending:{name:'🏁 Концовка',f:[['mode','Вид концовки','sel',[['plain','Обычная (название и текст)'],['table','Фотографии на столе (как из фотоаппарата)']]],['bg','Фото на фоне (для обычной, необязательно)','fotonum'],['title','Название концовки (например: Концовка 1: Дом)','text'],['text','Текст под названием (необязательно)','area'],['restart','Кнопка после концовки','sel',[['1','«Начать заново»'],['','Без кнопки']]],['audio','Голос концовки — озвучка названия и текста (необязательно)','audio'],['secAll','Секунд на каждое фото по умолчанию (пусто — автоматически: по голосу или по длине подписи)','num']],d:()=>({type:'ending',mode:'plain',bg:'',title:'',text:'',restart:'1',audio:'',secAll:'',cards:[]})},
  card:{name:'📷 Фотография на столе',hid:1,f:[['n','Номер фото','fotonum'],['text','Подпись под фото','text'],['audio','Голос (необязательно)','audio'],['sec','Сколько секунд держать это фото, пока не ляжет следующее (пусто — по умолчанию из концовки)','num']],d:()=>({type:'card',n:'',text:'',audio:'',sec:''})},
- choice:{name:'🔀 Выбор',f:[],d:()=>({type:'choice',options:[{label:'',back:'',steps:[]},{label:'',back:'',steps:[]}]})}
+ choice:{name:'🔀 Выбор',f:[['pos','Где будут кнопки выбора','pos',s=>(s.options||[]).length]],d:()=>({type:'choice',options:[{label:'',back:'',steps:[]},{label:'',back:'',steps:[]}]})}
 };
 const SEL=new Set();let CLIP=JSON.parse(localStorage.getItem('clip')||'[]');
 const eSt=t=>$('eSt').textContent=t;
@@ -950,7 +974,43 @@ async function recToggle(btn,done){
     try{eSt('Обрабатываю запись…');await done(await toWav(new Blob(ch)))}catch(e){eSt('❌ '+e.message)}};
   rec.start();btn.textContent='⏹ Стоп';eSt('Идёт запись… нажми «Стоп», когда закончишь.');
 }
+function posField(s,label,cnt){
+  const w=h('label','fld');w.append(h('span','',label));
+  const sel=h('select');
+  [['center','По центру'],['end','Как «Далее» — справа внизу'],['custom','Своё место на экране']].forEach(([v,t])=>{const o=h('option','',t);o.value=v;sel.append(o)});
+  sel.value=s.pos||(s.type==='button'&&s.align!=='center'?'end':'center');
+  w.append(sel);
+  const box=h('div'),map=h('div','pmap'),dot=h('div','pdot'),info=h('div','pmx');
+  const n=Math.max(1,Math.min(5,cnt?cnt(s):1));
+  for(let i=0;i<n;i++)dot.append(h('b','',n>1?'Вариант '+(i+1):'Кнопка'));
+  map.append(h('i','gx'),h('i','gy'),dot);
+  const z=h('div','pz','экран игры');z.style.top='6px';map.append(z);
+  box.append(map,info);
+  const SX=[50,82],SY=[50,59,82],TH=4;
+  const place=()=>{dot.style.left=s.px+'%';dot.style.top=s.py+'%';info.textContent='Центр кнопок: '+Math.round(s.px)+'% слева, '+Math.round(s.py)+'% сверху. Подвинь пальцем; рядом с центром сама «прилипнет».'};
+  const move=e=>{
+    const r=map.getBoundingClientRect();
+    let x=Math.max(8,Math.min(92,(e.clientX-r.left)/r.width*100)),y=Math.max(6,Math.min(94,(e.clientY-r.top)/r.height*100));
+    const sx=SX.find(v=>Math.abs(x-v)<TH),sy=SY.find(v=>Math.abs(y-v)<TH);
+    if(sx!==undefined)x=sx;if(sy!==undefined)y=sy;
+    map.classList.toggle('sx',sx!==undefined);map.classList.toggle('sy',sy!==undefined);
+    s.px=Math.round(x*10)/10;s.py=Math.round(y*10)/10;place();changed();
+  };
+  map.addEventListener('pointerdown',e=>{e.preventDefault();map.setPointerCapture(e.pointerId);map.dragging=true;move(e)});
+  map.addEventListener('pointermove',e=>{if(map.dragging)move(e)});
+  const stop=()=>{map.dragging=false;map.classList.remove('sx','sy')};
+  map.addEventListener('pointerup',stop);map.addEventListener('pointercancel',stop);
+  const show=()=>{box.style.display=sel.value==='custom'?'block':'none'};
+  sel.addEventListener('change',()=>{
+    s.pos=sel.value;
+    if(sel.value==='custom'&&!isFinite(parseFloat(s.px))){s.px=50;s.py=s.type==='button'?82:59;place()}
+    if(s.type==='button')s.align=sel.value==='center'?'center':'end';
+    show();changed()});
+  if(!isFinite(parseFloat(s.px))){s.px=50;s.py=s.type==='button'?82:59}
+  place();show();w.append(box);return w;
+}
 function field(s,[k,label,kind,opts]){
+  if(kind==='pos')return posField(s,label,opts);
   const w=h('label','fld');w.append(h('span','',label));let c;
   if(kind==='sel'){c=h('select');opts.forEach(([v,t])=>{const o=h('option','',t);o.value=v;c.append(o)});c.value=s[k]??opts[0][0]}
   else if(kind==='area'||kind==='lines'){c=h('textarea');c.rows=kind==='lines'?5:3;c.value=kind==='lines'?(s[k]||[]).join('\n'):(s[k]||'')}
