@@ -30,6 +30,8 @@ html,body{margin:0;height:100%;background:#000;overflow:hidden;font-family:syste
 #btns{position:absolute;left:0;right:0;top:55%;display:flex;gap:10px;z-index:7;padding:0 14px}
 #btns.end{justify-content:flex-end;padding:0 10px 0 0;top:calc(77% + 20px)}
 #btns.center{justify-content:center}
+#btns.col{flex-direction:column;top:auto;bottom:calc(14px + env(safe-area-inset-bottom,0px));max-height:62%;overflow-y:auto;overscroll-behavior:contain;padding:4px 14px;gap:8px}
+#btns.col .btn{flex:none;width:100%;font-size:15px;padding:11px 12px;text-align:center}
 .btn{font:700 17px system-ui,sans-serif;color:#fff;background:rgba(20,20,20,.78);border:2px solid rgba(255,255,255,.85);padding:13px 22px;border-radius:14px;opacity:0;transition:opacity 1s}
 #btns.row .btn{flex:1;font-size:14px;padding:12px 8px}
 .btn.show{opacity:1}
@@ -281,7 +283,8 @@ async function centerText(t,ms=3500){
 // align: 'end' (прижата вправо), 'center', 'row' (несколько в ряд)
 function ask(labels,align='end'){
   return new Promise(async res=>{
-    const w=$('btns');w.className=align;w.innerHTML='';
+    if(align==='row'&&labels.length>2)align='col';
+    const w=$('btns');w.className=align;w.innerHTML='';w.scrollTop=0;
     const bs=labels.map((l,i)=>{
       const b=document.createElement('button');b.className='btn';b.textContent=l;
       b.addEventListener('pointerdown',e=>e.stopPropagation());
