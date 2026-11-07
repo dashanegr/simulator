@@ -67,7 +67,7 @@ body.pv #exitpv{display:block}
 #invp{display:none;position:absolute;left:18px;right:18px;top:16%;z-index:12;background:rgba(0,0,0,.9);border:1px solid rgba(255,255,255,.4);border-radius:16px;padding:16px;color:#fff}
 #invp h3{margin:0 0 8px;font-size:20px}.iv{padding:9px 0;font-size:17px;border-bottom:1px solid rgba(255,255,255,.15)}
 #invx{margin-top:12px;font:700 15px system-ui;color:#fff;background:#222;border:1px solid #888;border-radius:10px;padding:9px 16px}
-#stl{margin-bottom:10px}#stl h4{margin:0 0 6px;font-size:13px;font-weight:600;opacity:.65}.stt{padding:8px 11px;margin-bottom:7px;border:1px solid rgba(255,255,255,.4);border-radius:10px;font-size:16px;font-weight:700}.stt small{display:block;margin-top:2px;font-size:13px;font-weight:400;opacity:.75}
+#stl{margin-bottom:10px}#stl h4{margin:0 0 6px;font-size:13px;font-weight:600;opacity:.65}.stt{padding:8px 11px;margin-bottom:7px;border:1px solid rgba(255,255,255,.4);border-radius:10px;font-size:16px;font-weight:700}.mbar{margin-top:6px;height:9px;border-radius:5px;background:rgba(255,255,255,.2);overflow:hidden}.mbar i{display:block;height:100%;background:#fff;border-radius:5px;transition:width .5s}.stt small{display:block;margin-top:2px;font-size:13px;font-weight:400;opacity:.75}
 #invl{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}.tile{text-align:center;font-size:13px}
 .th{aspect-ratio:1;border:2px solid #fff;border-radius:12px;overflow:hidden;display:flex;align-items:center;justify-content:center;font-size:34px;background:#111;margin-bottom:4px}.th img{width:100%;height:100%;object-fit:contain}
 #invd{display:none;position:absolute;left:12px;right:12px;top:8%;max-height:84%;overflow:auto;z-index:14;background:rgba(0,0,0,.95);border:1px solid #888;border-radius:16px;padding:14px;color:#fff;text-align:center}
@@ -332,11 +332,27 @@ const DEFAULT={steps:[
 ]};
 
 /* ---------- ИНВЕНТАРЬ, ВРЕМЯ, НАДПИСИ В ОВАЛЕ ---------- */
-let inv=[],act=[],st=[],invOn=false,clockText='';
+let inv=[],act=[],st=[],mt=[],invOn=false,clockText='';
 /* статусы героини: видимые (показываются игроку) и скрытые (только для сюжета) */
 const stKey=n=>String(n||'').trim().toLowerCase();
 const hasSt=n=>st.some(x=>stKey(x.name)===stKey(n));
-const has=n=>hasSt(n)||isAct(n);
+/* шкалы 0–100%: «хлопок>=100», «хлопок<20», «хлопок=50» */
+const meterVal=n=>{const m=mt.find(x=>stKey(x.name)===stKey(n));return m?m.v:0};
+function chk(n){
+  const m=String(n||'').trim().match(/^(.+?)\s*(>=|<=|>|<|=)\s*(\d+)\s*%?$/);
+  if(m){const v=meterVal(m[1]),t=+m[3];return m[2]==='>='?v>=t:m[2]==='<='?v<=t:m[2]==='>'?v>t:m[2]==='<'?v<t:v===t}
+  return hasSt(n);
+}
+const has=n=>chk(n)||isAct(n);
+function applyMeter(s){
+  const n=(s.name||'').trim();if(!n)return;
+  let m=mt.find(x=>stKey(x.name)===stKey(n));
+  if(!m){m={name:n,v:0,vis:false};mt.push(m)}
+  if(s.vis==='1')m.vis=true;
+  const a=parseFloat(s.amount)||0;
+  m.v=Math.max(0,Math.min(100,s.op==='set'?a:s.op==='sub'?m.v-a:m.v+a));
+  updInv();
+}
 const names=v=>String(v||'').split(/[,;\n]/).map(x=>x.trim()).filter(Boolean);
 const optOk=o=>names(o.req).every(has)&&!names(o.unless).some(has);
 function applyStatus(s){
@@ -351,16 +367,18 @@ const invFind=n=>inv.findIndex(x=>x.name.toLowerCase().includes(n.trim().toLower
 const isAct=n=>act.some(a=>a.toLowerCase().includes(n.trim().toLowerCase()));
 const invAdd=n=>{if(!inv.some(x=>x.name.toLowerCase()===n.toLowerCase()))inv.push({name:n})};
 function updInv(){
-  const vs=st.filter(x=>x.vis);
-  $('invbtn').style.display=invOn||vs.length?'flex':'none';
+  const vs=st.filter(x=>x.vis),vm=mt.filter(x=>x.vis);
+  $('invbtn').style.display=invOn||vs.length||vm.length?'flex':'none';
   const sl=$('stl');sl.innerHTML='';
-  if(vs.length){
+  if(vs.length||vm.length){
     sl.append(h4('Состояние'));
     vs.forEach(x=>{const d=document.createElement('div');d.className='stt';d.textContent=x.name;
       if(x.desc){const m=document.createElement('small');m.textContent=x.desc;d.append(m)}sl.append(d)});
+    vm.forEach(x=>{const d=document.createElement('div');d.className='stt';d.textContent=x.name+' — '+Math.round(x.v)+'%';
+      const b=document.createElement('div');b.className='mbar';const i=document.createElement('i');i.style.width=x.v+'%';b.append(i);d.append(b);sl.append(d)});
   }
   const l=$('invl');l.innerHTML='';
-  if(!inv.length){if(!vs.length)l.textContent='Пусто';return}
+  if(!inv.length){if(!vs.length&&!vm.length)l.textContent='Пусто';return}
   inv.forEach(x=>{
     const d=document.createElement('div');d.className='tile';
     const th=document.createElement('div');th.className='th';
@@ -731,13 +749,14 @@ async function doStep(s,id){
   case 'clock':showClock(s.text);break;
   case 'inv':applyInv(s);if(s.text)await notice(s.text,s.wait!=='0',s.sec);break;
   case 'notice':await notice(s.text||'',s.wait!=='0',s.sec);break;
+  case 'meter':applyMeter(s);break;
   case 'status':{
     const ch=applyStatus(s);
     if(ch&&s.vis!=='0'&&s.action!=='remove')await notice(s.text||('Новый статус: '+(s.name||'').trim()),s.wait!=='0',s.sec);
     else if(ch&&s.action==='remove'&&s.text)await notice(s.text,s.wait!=='0',s.sec);
     break}
   case 'if':{
-    const n=(s.name||'').trim(),a=isAct(n),hv=invFind(n)>=0,hs=hasSt(n);
+    const n=(s.name||'').trim(),a=isAct(n),hv=invFind(n)>=0,hs=chk(n);
     const ok=s.cond==='notactive'?!a:s.cond==='have'?hv:s.cond==='hasst'?hs:s.cond==='nost'?!hs:a;
     await runSteps((ok?s.then:s.else)||[],id);break}
   case 'computer':await runComputer(s);break;
@@ -777,12 +796,12 @@ function resetStage(){
   $('lines').innerHTML='';$('btns').innerHTML='';
   ['title','ring','center'].forEach(i=>$(i).style.opacity=0);
   $('list').classList.remove('show');
-  inv=[];act=[];st=[];invOn=false;$('invp').style.display='none';$('invd').style.display='none';$('notices').innerHTML='';$('ending').style.transition='none';$('ending').style.opacity=0;$('ending').style.background='';$('table').style.transition='none';$('table').style.opacity=0;$('table').innerHTML='';showClock('');updInv();
+  inv=[];act=[];st=[];mt=[];invOn=false;$('invp').style.display='none';$('invd').style.display='none';$('notices').innerHTML='';$('ending').style.transition='none';$('ending').style.opacity=0;$('ending').style.background='';$('table').style.transition='none';$('table').style.opacity=0;$('table').innerHTML='';showClock('');updInv();
 }
 async function startGame(from=0){
   const id=++runId;resetStage();
   const steps=story.steps,prev=steps.slice(0,from);
-  for(const x of prev){if(x.type==='checklist'){invOn=true}else if(x.type==='inv')applyInv(x);else if(x.type==='status')applyStatus(x);else if(x.type==='clock')clockText=x.text||''}
+  for(const x of prev){if(x.type==='checklist'){invOn=true}else if(x.type==='inv')applyInv(x);else if(x.type==='status')applyStatus(x);else if(x.type==='meter')applyMeter(x);else if(x.type==='clock')clockText=x.text||''}
   updInv();showClock(clockText);
   const lp=[...prev].reverse().find(x=>x.type==='photo');
   if(lp)await setPhoto(+lp.n,0);
@@ -815,8 +834,9 @@ const TYPES={
  checklist:{name:'☑️ Список вещей',f:[['title','Заголовок','text'],['items','Пункты (каждый с новой строки)','lines'],['label','Кнопка','text']],d:()=>({type:'checklist',title:'',items:[],label:'Далее'})},
  clock:{name:'🕒 Время в углу',f:[['text','Что показывать (например 14:30). Пусто — спрятать','text']],d:()=>({type:'clock',text:''})},
  inv:{name:'🎒 Инвентарь',f:[['action','Действие','sel',[['add','Добавить предмет / задать его данные'],['activate','Активировать (предмет исчезнет из инвентаря)'],['deactivate','Сделать неактивированным'],['remove','Убрать предмет']]],['name','Название предмета (например: часы)','text'],['photo','Фото предмета','img'],['desc','Описание при рассматривании','area'],['can','Кнопка «Активировать» в просмотре','sel',[['','Без кнопки'],['1','Есть кнопка']]],['actText','Надпись в овале, когда игрок нажмёт «Активировать»','text'],['actSec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['text','Надпись в овале на этом шаге (например: Часы добавлены в инвентарь)','text'],['sec','Сколько секунд показывать эту надпись (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'inv',action:'add',name:'',photo:'',desc:'',can:'',actText:'',text:'',wait:'1'})},
+ meter:{name:'📊 Шкала',f:[['name','Название шкалы (например: хлопок)','text'],['op','Что сделать','sel',[['add','Добавить к шкале'],['sub','Убавить'],['set','Установить значение']]],['amount','На сколько процентов (0–100)','num'],['vis','Видна ли игроку','sel',[['0','Скрытая (игрок не видит)'],['1','Видимая (полоска в 🎒)']]]],d:()=>({type:'meter',name:'',op:'add',amount:'20',vis:'0'})},
  status:{name:'🏷 Статус героини',f:[['action','Действие','sel',[['add','Выдать статус'],['remove','Снять статус']]],['name','Название статуса (например: проучила Диму)','text'],['vis','Виден ли игроку','sel',[['1','Видимый (надпись в овале и запись в 🎒)'],['0','Скрытый (игрок не узнает, но сюжет его учтёт)']]],['desc','Описание статуса (видно игроку только у видимого)','area'],['text','Надпись в овале (пусто — «Новый статус: …»; у скрытого не показывается)','text'],['sec','Сколько секунд показывать надпись (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'status',action:'add',name:'',vis:'1',desc:'',text:'',wait:'1'})},
- if:{name:'❓ Если статус / предмет…',f:[['name','Название статуса или предмета (например: проучила Диму)','text'],['cond','Условие','sel',[['hasst','Статус есть'],['nost','Статуса НЕТ'],['active','Предмет активирован'],['notactive','Предмет НЕ активирован'],['have','Предмет сейчас в инвентаре']]]],d:()=>({type:'if',name:'',cond:'hasst',then:[],else:[]})},
+ if:{name:'❓ Если статус / предмет…',f:[['name','Статус, предмет или шкала (например: проучила Диму  или  хлопок>=100)','text'],['cond','Условие','sel',[['hasst','Статус есть / условие шкалы выполнено'],['nost','Статуса нет / условие шкалы НЕ выполнено'],['active','Предмет активирован'],['notactive','Предмет НЕ активирован'],['have','Предмет сейчас в инвентаре']]]],d:()=>({type:'if',name:'',cond:'hasst',then:[],else:[]})},
  notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['sec','Сколько секунд показывать (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
  computer:{name:'💻 Компьютер',f:[['pass','Пароль для папки «Засекречено»','text'],['secret','Что показать внутри «Засекречено» после ввода пароля','area']],d:()=>({type:'computer',pass:'ХлопокВанЛав',secret:'Здесь пока пусто. Но скоро здесь что-то появится.'})},
  ending:{name:'🏁 Концовка',f:[['mode','Вид концовки','sel',[['plain','Обычная (название и текст)'],['table','Фотографии на столе (как из фотоаппарата)']]],['bg','Фото на фоне (для обычной, необязательно)','fotonum'],['title','Название концовки (например: Концовка 1: Дом)','text'],['text','Текст под названием (необязательно)','area'],['restart','Кнопка после концовки','sel',[['1','«Начать заново»'],['','Без кнопки']]],['audio','Голос концовки — озвучка названия и текста (необязательно)','audio'],['secAll','Секунд на каждое фото по умолчанию (пусто — автоматически: по голосу или по длине подписи)','num']],d:()=>({type:'ending',mode:'plain',bg:'',title:'',text:'',restart:'1',audio:'',secAll:'',cards:[]})},
@@ -844,8 +864,8 @@ function renderList(steps,parent,top,kinds){
       s.options.forEach((o,k)=>{
         const ob=h('div','opt');ob.append(h('b','',`Вариант ${k+1}`));
         ob.append(field(o,['label','Текст кнопки','text']));
-        ob.append(field(o,['req','Показывать вариант, только если у героини есть (статус или активированный предмет; несколько — через запятую, нужны все)','text']));
-        ob.append(field(o,['unless','Скрывать вариант, если есть (через запятую)','text']));
+        ob.append(field(o,['req','Показывать вариант, только если есть (статус, активированный предмет или шкала, например хлопок>=100; несколько — через запятую, нужны все)','text']));
+        ob.append(field(o,['unless','Скрывать вариант, если есть (статус, предмет, шкала; через запятую)','text']));
         ob.append(field(o,['back','После этого варианта','sel',[['','Идти дальше по сюжету'],['1','Вернуться к выбору (этот вариант пропадёт)']]]));
         ob.append(h('div','sub','Что происходит после нажатия:'));
         const n=h('div','nest');renderList(o.steps,n,false);ob.append(n);
