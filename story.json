@@ -1128,6 +1128,71 @@
    "type": "button",
    "label": "Идти за толпой",
    "align": "center"
+  },
+  {
+   "type": "photo",
+   "n": "48",
+   "fx": "fade"
+  },
+  {
+   "type": "button",
+   "label": "Встать в очередь",
+   "align": "end"
+  },
+  {
+   "type": "photo",
+   "n": "49",
+   "fx": "fade"
+  },
+  {
+   "type": "say",
+   "text": "— Что ты будешь, лапочка?)",
+   "who": "npc"
+  },
+  {
+   "type": "choice",
+   "options": [
+    {
+     "label": "Хлопковую кашу",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Хлопковый суп",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Хлопок",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Хлопковое пюре",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Хлопковые котлеты",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Хлопковый чай",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Воду",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Вас😏",
+     "back": "",
+     "steps": []
+    }
+   ]
   }
  ]
 }
