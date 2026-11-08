@@ -14,7 +14,10 @@
   {
    "type": "button",
    "label": "Понятно",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 94,
+   "pos": "custom"
   },
   {
    "type": "veil",
@@ -28,6 +31,10 @@
    "type": "photo",
    "n": "40",
    "fx": "hidden"
+  },
+  {
+   "type": "veil",
+   "to": "0"
   },
   {
    "type": "say",
@@ -102,7 +109,9 @@
   {
    "type": "button",
    "label": "Далее",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -150,7 +159,9 @@
   {
    "type": "button",
    "label": "Далее",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -180,7 +191,9 @@
   {
    "type": "button",
    "label": "Далее",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -200,7 +213,9 @@
   {
    "type": "button",
    "label": "Далее",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -222,7 +237,9 @@
   {
    "type": "button",
    "label": "Далее",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -232,7 +249,9 @@
   {
    "type": "button",
    "label": "Зайти",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -312,7 +331,9 @@
       }
      ]
     }
-   ]
+   ],
+   "px": 50,
+   "py": 59
   },
   {
    "type": "checklist",
@@ -398,7 +419,9 @@
   {
    "type": "button",
    "label": "Спуститься вниз",
-   "align": "center"
+   "align": "center",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "clock",
@@ -412,7 +435,9 @@
   {
    "type": "button",
    "label": "Сесть в машину",
-   "align": "center"
+   "align": "center",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "veil",
@@ -452,7 +477,9 @@
   {
    "type": "button",
    "label": "Выйти из машины",
-   "align": "center"
+   "align": "center",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -474,7 +501,9 @@
   {
    "type": "button",
    "label": "Зайти в министерство",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "veil",
@@ -498,7 +527,9 @@
   {
    "type": "button",
    "label": "Подойти к стойке",
-   "align": "center"
+   "align": "center",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -550,7 +581,9 @@
   {
    "type": "button",
    "label": "Подождать свое очереди",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -575,7 +608,9 @@
   {
    "type": "button",
    "label": "Подойти к стойке",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -737,7 +772,9 @@
          "back": "",
          "steps": []
         }
-       ]
+       ],
+       "px": 50,
+       "py": 59
       },
       {
        "type": "veil",
@@ -781,12 +818,16 @@
       }
      ]
     }
-   ]
+   ],
+   "px": 50,
+   "py": 59
   },
   {
    "type": "button",
    "label": "Зайти",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -801,17 +842,20 @@
   {
    "type": "say",
    "text": "— Эмм... Здравствуйте",
-   "who": "me"
+   "who": "me",
+   "audio": "golos79.wav"
   },
   {
    "type": "say",
    "text": "— Здравствуйте....",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos84.wav"
   },
   {
    "type": "say",
    "text": "— Вы новенькая?",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos84.wav"
   },
   {
    "type": "say",
@@ -982,7 +1026,9 @@
           }
          ]
         }
-       ]
+       ],
+       "px": 50,
+       "py": 59
       }
      ]
     },
@@ -991,7 +1037,9 @@
      "back": "",
      "steps": []
     }
-   ]
+   ],
+   "px": 50,
+   "py": 59
   },
   {
    "type": "clock",
@@ -1047,7 +1095,9 @@
   {
    "type": "button",
    "label": "Зайти",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -1067,7 +1117,9 @@
   {
    "type": "button",
    "label": "Переодеться в новую одежду",
-   "align": "center"
+   "align": "center",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "inv",
@@ -1093,7 +1145,9 @@
   {
    "type": "button",
    "label": "Выйти из комнаты",
-   "align": "center"
+   "align": "center",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -1116,18 +1170,20 @@
    "type": "notice",
    "text": "Интересный у них конечно звонок на завтрак😏",
    "wait": "1",
-   "sec": "10"
+   "sec": "3"
   },
   {
    "type": "notice",
    "text": "А чо все в такой же одежде что и я.... Ну ладно пойду наверное за ними....",
    "wait": "1",
-   "sec": "12"
+   "sec": "4"
   },
   {
    "type": "button",
    "label": "Идти за толпой",
-   "align": "center"
+   "align": "center",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -1137,7 +1193,9 @@
   {
    "type": "button",
    "label": "Встать в очередь",
-   "align": "end"
+   "align": "end",
+   "px": 50,
+   "py": 82
   },
   {
    "type": "photo",
@@ -1240,7 +1298,9 @@
      "back": "",
      "steps": []
     }
-   ]
+   ],
+   "px": 50,
+   "py": 59
   }
  ]
 }
