@@ -9,7 +9,7 @@
    "type": "notice",
    "text": "",
    "wait": "1",
-   "sec": "7"
+   "sec": "4"
   },
   {
    "type": "button",
@@ -849,28 +849,31 @@
    "type": "say",
    "text": "— Здравствуйте....",
    "who": "npc",
-   "audio": "golos84.wav"
+   "audio": "golos87.wav"
   },
   {
    "type": "say",
    "text": "— Вы новенькая?",
    "who": "npc",
-   "audio": "golos84.wav"
+   "audio": "golos86.wav"
   },
   {
    "type": "say",
    "text": "— Да",
-   "who": "me"
+   "who": "me",
+   "audio": "golos88.wav"
   },
   {
    "type": "say",
    "text": "— Так так так, Даша да?",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos90.wav"
   },
   {
    "type": "say",
    "text": "— Верно....",
-   "who": "me"
+   "who": "me",
+   "audio": "golos91.wav"
   },
   {
    "type": "photo",
@@ -880,32 +883,38 @@
   {
    "type": "say",
    "text": "— Вы должны быть где то тут....",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos92.wav"
   },
   {
    "type": "say",
    "text": "— А нашёл.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos93.wav"
   },
   {
    "type": "say",
    "text": "— Так на 5 летие подарили горшок... На 10 летие мотыгу... Очень хорошо.... И сейчас одежду....",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos95.wav"
   },
   {
    "type": "say",
    "text": "— Прекрасно! Вы нам идеально подходите!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos96.wav"
   },
   {
    "type": "say",
    "text": "— Для чего?",
-   "who": "me"
+   "who": "me",
+   "audio": "golos97.wav"
   },
   {
    "type": "say",
    "text": "— Для работы конечно. Ну все мне пора, Дмитрий проводит вас до общежития... Ой и вот, держите расписание.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos98.wav"
   },
   {
    "type": "inv",
@@ -948,7 +957,8 @@
       {
        "type": "say",
        "text": "— Что это вы тут делаете?!",
-       "who": "npc"
+       "who": "npc",
+       "audio": "golos99.wav"
       },
       {
        "type": "choice",
@@ -960,12 +970,14 @@
           {
            "type": "say",
            "text": "— Простите, мне было любопытно что это за место, просто вы ничего не говорите...",
-           "who": "me"
+           "who": "me",
+           "audio": "golos100.wav"
           },
           {
            "type": "say",
            "text": "— Ой, да ничего страшного, я же не ругаюсь, вы поймете все со временем, Дима вас уже наверное заждался...",
-           "who": "npc"
+           "who": "npc",
+           "audio": "golos101.wav"
           }
          ]
         },
@@ -976,7 +988,8 @@
           {
            "type": "say",
            "text": "— Ничего...",
-           "who": "me"
+           "who": "me",
+           "audio": "golos102.wav"
           },
           {
            "type": "status",
@@ -991,7 +1004,8 @@
           {
            "type": "say",
            "text": "— Ага, так я вам и поверил. Идите уже, Дима ждет вас.",
-           "who": "npc"
+           "who": "npc",
+           "audio": "golos103.wav"
           }
          ]
         },
@@ -1002,7 +1016,8 @@
           {
            "type": "say",
            "text": "— Ой, директор, вы такой бьютифул мен😏",
-           "who": "me"
+           "who": "me",
+           "audio": "golos104.wav"
           },
           {
            "type": "status",
@@ -1022,7 +1037,8 @@
           {
            "type": "say",
            "text": "(смущенно)\n— Ой, да? Спасибо. Ну вы там лучше поторопитесь, Дима ждет вас...",
-           "who": "npc"
+           "who": "npc",
+           "audio": "golos105.wav"
           }
          ]
         }
@@ -1053,17 +1069,20 @@
   {
    "type": "say",
    "text": "— Привет, ты Даша?",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos106.wav"
   },
   {
    "type": "say",
    "text": "— Да.",
-   "who": "me"
+   "who": "me",
+   "audio": "golos107.wav"
   },
   {
    "type": "say",
    "text": "— Я провожу тебя до общежития. Пойдем.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos108.wav"
   },
   {
    "type": "veil",
@@ -1085,7 +1104,8 @@
   {
    "type": "say",
    "text": "— Ну вот, пришли. У тебя 67 этаж 5252 комната. Устраивайся, скоро завтрак.",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos109.wav"
   },
   {
    "type": "photo",
@@ -1140,7 +1160,8 @@
   {
    "type": "say",
    "text": "— ЗАВТРАК!!!!!",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos111.wav"
   },
   {
    "type": "button",
@@ -1205,7 +1226,8 @@
   {
    "type": "say",
    "text": "— Что ты будешь, лапочка?)",
-   "who": "npc"
+   "who": "npc",
+   "audio": "golos115.wav"
   },
   {
    "type": "choice",
@@ -1295,8 +1317,187 @@
     },
     {
      "label": "Вас😏",
+     "back": "1",
+     "steps": [
+      {
+       "type": "status",
+       "action": "add",
+       "name": "Флирт с поваром",
+       "vis": "1",
+       "desc": "Флиртовать с поваром?) Серьезно?) Ты хочешь стать таким же круглым пирожочком как он? 😏",
+       "text": "Добавлен новый статус, флирт с поваром😏",
+       "wait": "1"
+      },
+      {
+       "type": "say",
+       "text": "— ( очень смущен)\nНу так кушать тебе все же надо, негринулька.",
+       "who": "npc",
+       "audio": "golos116.wav"
+      }
+     ]
+    }
+   ],
+   "px": 50,
+   "py": 59
+  },
+  {
+   "type": "photo",
+   "n": "50",
+   "fx": "fade"
+  },
+  {
+   "type": "say",
+   "text": "— О, Даша, привет, ты тоже тут?",
+   "who": "npc",
+   "audio": "golos117.wav"
+  },
+  {
+   "type": "say",
+   "text": "— Привет Миша, да, я тоже тут, а ты что тут делаешь?",
+   "who": "me",
+   "audio": "golos118.wav"
+  },
+  {
+   "type": "say",
+   "text": "— Да мне кто то позвонил вот я пришёл.",
+   "who": "npc",
+   "audio": "golos119.wav"
+  },
+  {
+   "type": "say",
+   "text": "— Давай сядем за одним столиком.",
+   "who": "npc",
+   "audio": "golos120.wav"
+  },
+  {
+   "type": "photo",
+   "n": "52",
+   "fx": "fade"
+  },
+  {
+   "type": "say",
+   "text": "— Может ты сядешь со мной за одним столиком?) 😏",
+   "who": "npc",
+   "audio": "golos121.wav"
+  },
+  {
+   "type": "choice",
+   "options": [
+    {
+     "label": "Сесть за один столик с Димой.",
      "back": "",
-     "steps": []
+     "steps": [
+      {
+       "type": "say",
+       "text": "— Дим, пойдём, позавтракаем вместе.",
+       "who": "me",
+       "audio": "golos122.wav"
+      },
+      {
+       "type": "photo",
+       "n": "53",
+       "fx": "fade"
+      },
+      {
+       "type": "status",
+       "action": "add",
+       "name": "Димина",
+       "vis": "1",
+       "desc": "Сели за один столик с Димой😏😏😏",
+       "text": "Доблен статус Димина",
+       "wait": "1",
+       "sec": "3"
+      },
+      {
+       "type": "photo",
+       "n": "57",
+       "fx": "fade"
+      },
+      {
+       "type": "say",
+       "text": "— Ну вот пришли, твой участок 148867",
+       "who": "npc"
+      }
+     ]
+    },
+    {
+     "label": "Сесть за один столик с Мишей.",
+     "back": "",
+     "steps": [
+      {
+       "type": "say",
+       "text": "— Миш, пойдём, позавтракаем вместе.",
+       "who": "npc",
+       "audio": "golos123.wav"
+      },
+      {
+       "type": "photo",
+       "n": "54",
+       "fx": "fade"
+      },
+      {
+       "type": "status",
+       "action": "add",
+       "name": "Мишина",
+       "vis": "1",
+       "desc": "Сели за один столик с Мишей😏😏😏",
+       "text": "Добавлен статус Мишина",
+       "wait": "1"
+      },
+      {
+       "type": "photo",
+       "n": "58",
+       "fx": "fade"
+      },
+      {
+       "type": "say",
+       "text": "— Ну вот пришли, твой участок 148867",
+       "who": "npc"
+      }
+     ]
+    },
+    {
+     "label": "Сесть с двумя за один столик.",
+     "back": "",
+     "steps": [
+      {
+       "type": "say",
+       "text": "— Мальчики, не ссорьтесь, меня на всех хватит😏",
+       "who": "npc",
+       "audio": "golos124.wav"
+      },
+      {
+       "type": "say",
+       "text": "",
+       "who": "npc",
+       "audio": "golos125.wav"
+      },
+      {
+       "type": "photo",
+       "n": "56",
+       "fx": "fade"
+      },
+      {
+       "type": "status",
+       "action": "add",
+       "name": "На всех хватит",
+       "vis": "1",
+       "desc": "Вы лучше поаккуратнее в столовой полной людей, а то одна фраза может изменить всё 😏",
+       "text": "Добавлен новый статус: На всех хватит",
+       "wait": "1",
+       "sec": "3"
+      },
+      {
+       "type": "photo",
+       "n": "59",
+       "fx": "fade"
+      },
+      {
+       "type": "say",
+       "text": "— Ну вот пришли, твой участок 148867",
+       "who": "npc"
+      }
+     ]
     }
    ],
    "px": 50,
