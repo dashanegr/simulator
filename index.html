@@ -169,6 +169,23 @@ body.pv #exitpv{display:block}
 .sc .sct{white-space:pre-line;font:16px/1.35 Tahoma,sans-serif;background:#fff;border:2px inset #999;padding:14px;width:100%;text-align:left}
 .sc.shake input{animation:shk .35s}
 @keyframes shk{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+/* ===== хлопковое поле ===== */
+#cf{position:absolute;inset:0;z-index:24;display:none;opacity:0;transition:opacity .6s;overflow:hidden;background:linear-gradient(#3f9dff 0%,#9ed8ff 36%,#d9f1ff 50%);touch-action:manipulation}
+#cfsun{position:absolute;right:26px;top:calc(40px + env(safe-area-inset-top,0px));width:92px;height:92px;border-radius:50%;background:radial-gradient(circle,#fffbb8 0,#ffe14d 50%,#ffb800 100%);box-shadow:0 0 0 14px rgba(255,225,70,.35),0 0 70px 34px rgba(255,235,130,.65);animation:cfp 4s ease-in-out infinite}
+@keyframes cfp{50%{transform:scale(1.07)}}
+.cfc{position:absolute;height:32px;background:#fff;border-radius:30px;opacity:.92}
+.cfc:before,.cfc:after{content:"";position:absolute;background:#fff;border-radius:50%}
+.cfc:before{width:44px;height:44px;left:16px;top:-22px}.cfc:after{width:32px;height:32px;right:16px;top:-14px}
+.cfc.a{left:7%;top:150px;width:112px}.cfc.b{left:46%;top:104px;width:84px;opacity:.8}
+#cff{position:absolute;left:-10%;right:-10%;bottom:0;height:64%;border-radius:50% 50% 0 0/46px;background:repeating-linear-gradient(0deg,rgba(0,0,0,.09) 0 16px,transparent 16px 32px),linear-gradient(#8ccb52,#4a8a2a)}
+#cft{position:absolute;left:0;right:0;top:calc(158px + env(safe-area-inset-top,0px));text-align:center;font:800 26px system-ui,sans-serif;color:#fff;-webkit-text-stroke:3px #1d5c8a;paint-order:stroke fill;text-shadow:0 2px 6px rgba(0,0,0,.35);padding:0 14px}
+#cfn{position:absolute;left:50%;transform:translateX(-50%);top:calc(204px + env(safe-area-inset-top,0px));padding:4px 16px;border-radius:999px;font:700 16px system-ui,sans-serif;color:#fff;background:rgba(20,60,20,.55);border:1.5px solid rgba(255,255,255,.7)}
+#cfg{position:absolute;left:4%;right:4%;bottom:calc(5% + env(safe-area-inset-bottom,0px));display:grid;grid-template-columns:repeat(5,1fr);gap:8px}
+.cfk{aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:14px;background:rgba(255,255,255,.3);border:2px solid rgba(255,255,255,.75);box-shadow:0 3px 0 rgba(0,70,0,.35);font-size:var(--fs,38px);line-height:1;transition:background .25s,transform .25s}
+.cfk:active{transform:scale(.92)}
+.cfk.got{background:rgba(80,50,20,.35);border-color:rgba(80,50,20,.3);box-shadow:none;pointer-events:none}
+.cfk.got span{animation:cfpop .4s ease-out forwards}
+@keyframes cfpop{0%{transform:scale(1);opacity:1}40%{transform:scale(1.5);opacity:1}100%{transform:scale(.2) translateY(-30px);opacity:0}}
 </style>
 </head>
 <body>
@@ -185,6 +202,7 @@ body.pv #exitpv{display:block}
   <div id="btns"></div>
   <div id="clock" class="txt"></div><div id="notices"></div>
   <div id="ending"><div id="endT" class="txt"></div><div id="endX" class="txt"></div></div>
+  <div id="cf"><div id="cfsun"></div><i class="cfc a"></i><i class="cfc b"></i><div id="cff"></div><div id="cft"></div><div id="cfn"></div><div id="cfg"></div></div>
   <div id="pc">
     <div id="pcd"><div id="pci"></div><div id="pcw"></div></div>
     <div id="pct"><button id="pcx">⏻ Выйти из компьютера</button><span id="pctab"></span><span id="pcclk"></span></div>
@@ -495,6 +513,30 @@ async function tableShow(cards,defSec){
     await sleep(500);
   }
 }
+/* ---------- ХЛОПКОВОЕ ПОЛЕ ---------- */
+function cfStop(){const P=$('cf');if(P){P.style.transition='none';P.style.opacity=0;P.style.display='none';P.style.transition=''}}
+function runCotton(s){
+  return new Promise(async res=>{
+    cfStop();skip=null;
+    const P=$('cf'),G=$('cfg'),T=$('cft'),N=$('cfn'),R=4,C=5,total=R*C;let got=0;
+    T.textContent=s.title||'Собери хлопок!';G.innerHTML='';
+    const cell=(Math.min(innerWidth,480)*.92-8*(C-1))/C;
+    G.style.setProperty('--fs',Math.floor(cell*.6)+'px');
+    const upd=()=>{N.textContent=got+' / '+total};upd();
+    for(let i=0;i<total;i++){
+      const k=document.createElement('div');k.className='cfk';
+      const e=document.createElement('span');e.textContent=s.emoji||'☁️';k.append(e);
+      k.addEventListener('pointerdown',async ev=>{
+        ev.preventDefault();if(k.classList.contains('got'))return;
+        k.classList.add('got');got++;upd();
+        if(s.meter&&parseFloat(s.per))applyMeter({name:s.meter,op:'add',amount:s.per,vis:'0'});
+        if(got===total){await sleep(500);T.textContent=s.done||'Весь хлопок собран!';await sleep(1500);P.style.opacity=0;await sleep(600);cfStop();res()}
+      });
+      G.append(k);
+    }
+    P.style.display='block';await raf();P.style.opacity=1;
+  });
+}
 /* ---------- КОМПЬЮТЕР ---------- */
 const PC={sys:[],off:[],cfg:{},unlocked:false,chats:[],best:0};
 function AV(k){
@@ -783,6 +825,7 @@ async function doStep(s,id){
     const n=(s.name||'').trim(),a=isAct(n),hv=invFind(n)>=0,hs=chk(n);
     const ok=s.cond==='notactive'?!a:s.cond==='have'?hv:s.cond==='hasst'?hs:s.cond==='nost'?!hs:a;
     await runSteps((ok?s.then:s.else)||[],id);break}
+  case 'cotton':await runCotton(s);break;
   case 'computer':await runComputer(s);break;
   case 'ending':{
     await fade(1,2500);await clearLines();
@@ -812,7 +855,7 @@ async function doStep(s,id){
   }
 }
 function resetStage(){
-  skip=null;pcStop();
+  skip=null;pcStop();cfStop();
   ['pA','pB'].forEach(i=>{$(i).style.transition='none';$(i).style.opacity=0});
   cur=$('pA');oth=$('pB');
   $('veil').style.transition='none';$('veil').style.opacity=0;
@@ -862,6 +905,7 @@ const TYPES={
  status:{name:'🏷 Статус героини',f:[['action','Действие','sel',[['add','Выдать статус'],['remove','Снять статус']]],['name','Название статуса (например: проучила Диму)','text'],['vis','Виден ли игроку','sel',[['1','Видимый (надпись в овале и запись в 🎒)'],['0','Скрытый (игрок не узнает, но сюжет его учтёт)']]],['desc','Описание статуса (видно игроку только у видимого)','area'],['text','Надпись в овале (пусто — «Новый статус: …»; у скрытого не показывается)','text'],['sec','Сколько секунд показывать надпись (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'status',action:'add',name:'',vis:'1',desc:'',text:'',wait:'1'})},
  if:{name:'❓ Если статус / предмет…',f:[['name','Статус, предмет или шкала (например: проучила Диму  или  хлопок>=100)','text'],['cond','Условие','sel',[['hasst','Статус есть / условие шкалы выполнено'],['nost','Статуса нет / условие шкалы НЕ выполнено'],['active','Предмет активирован'],['notactive','Предмет НЕ активирован'],['have','Предмет сейчас в инвентаре']]]],d:()=>({type:'if',name:'',cond:'hasst',then:[],else:[]})},
  notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['sec','Сколько секунд показывать (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
+ cotton:{name:'🌾 Хлопковое поле',f:[['title','Надпись сверху','text'],['emoji','Эмодзи на квадратиках (хлопок)','text'],['done','Надпись, когда всё собрано','text'],['meter','Шкала, которая растёт за каждый собранный хлопок (необязательно, название шкалы)','text'],['per','На сколько процентов за каждый','num']],d:()=>({type:'cotton',title:'Собери хлопок!',emoji:'☁️',done:'Весь хлопок собран!',meter:'',per:'0'})},
  computer:{name:'💻 Компьютер',f:[['pass','Пароль для папки «Засекречено»','text'],['secret','Что показать внутри «Засекречено» после ввода пароля','area']],d:()=>({type:'computer',pass:'ХлопокВанЛав',secret:'Здесь пока пусто. Но скоро здесь что-то появится.'})},
  ending:{name:'🏁 Концовка',f:[['mode','Вид концовки','sel',[['plain','Обычная (название и текст)'],['table','Фотографии на столе (как из фотоаппарата)']]],['bg','Фото на фоне (для обычной, необязательно)','fotonum'],['title','Название концовки (например: Концовка 1: Дом)','text'],['text','Текст под названием (необязательно)','area'],['restart','Кнопка после концовки','sel',[['1','«Начать заново»'],['','Без кнопки']]],['audio','Голос концовки — озвучка названия и текста (необязательно)','audio'],['secAll','Секунд на каждое фото по умолчанию (пусто — автоматически: по голосу или по длине подписи)','num']],d:()=>({type:'ending',mode:'plain',bg:'',title:'',text:'',restart:'1',audio:'',secAll:'',cards:[]})},
  card:{name:'📷 Фотография на столе',hid:1,f:[['n','Номер фото','fotonum'],['text','Подпись под фото','text'],['audio','Голос (необязательно)','audio'],['sec','Сколько секунд держать это фото, пока не ляжет следующее (пусто — по умолчанию из концовки)','num']],d:()=>({type:'card',n:'',text:'',audio:'',sec:''})},
