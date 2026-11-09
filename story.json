@@ -1758,6 +1758,218 @@
     }
    ],
    "else": []
+  },
+  {
+   "type": "button",
+   "label": "Выйти из кабинета",
+   "align": "center",
+   "px": 50,
+   "py": 50,
+   "pos": "center"
+  },
+  {
+   "type": "photo",
+   "n": "66",
+   "fx": "fade"
+  },
+  {
+   "type": "center",
+   "text": "Ой! Вам резко приспичило в туалет!"
+  },
+  {
+   "type": "choice",
+   "options": [
+    {
+     "label": "Пойти в туалет",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Потерпеть",
+     "back": "1",
+     "steps": [
+      {
+       "type": "center",
+       "text": "Ну поздравляю! Вы обосрались! Идите уже в туалет обосранка."
+      }
+     ]
+    }
+   ],
+   "px": 50,
+   "py": 59
+  },
+  {
+   "type": "photo",
+   "n": "67",
+   "fx": "fade"
+  },
+  {
+   "type": "center",
+   "text": "* рингтон *"
+  },
+  {
+   "type": "say",
+   "text": "",
+   "who": "npc",
+   "audio": "golos149.ogg"
+  },
+  {
+   "type": "center",
+   "text": "* рингтон *"
+  },
+  {
+   "type": "say",
+   "text": "— Походу звук из 4 кабинки...",
+   "who": "npc",
+   "audio": "golos150.wav"
+  },
+  {
+   "type": "choice",
+   "options": [
+    {
+     "label": "Спокойно покекать под рингтончик ",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Посмотреть что же там происходит в этой 4 кабинке....",
+     "back": "",
+     "steps": [
+      {
+       "type": "photo",
+       "n": "68",
+       "fx": "fade"
+      },
+      {
+       "type": "button",
+       "label": "Заглянуть в телефон",
+       "align": "center",
+       "px": 50,
+       "py": 82,
+       "pos": "center"
+      },
+      {
+       "type": "photo",
+       "n": "69",
+       "fx": "fade"
+      },
+      {
+       "type": "say",
+       "text": "— Беги отсюда!!!",
+       "who": "npc",
+       "audio": "golos151.wav"
+      },
+      {
+       "type": "say",
+       "text": "— Они все не люди!",
+       "who": "npc",
+       "audio": "golos152.wav"
+      },
+      {
+       "type": "say",
+       "text": "— Убедись в этом сама! Пароль от компьютера директора ХлопокВанЛав.",
+       "who": "npc",
+       "audio": "golos153.wav"
+      }
+     ]
+    }
+   ],
+   "px": 50,
+   "py": 59
+  },
+  {
+   "type": "button",
+   "label": "Выйти из туалета.",
+   "align": "center",
+   "px": 50,
+   "py": 82,
+   "pos": "center"
+  },
+  {
+   "type": "photo",
+   "n": "70",
+   "fx": "fade"
+  },
+  {
+   "type": "choice",
+   "options": [
+    {
+     "label": "Вернуться в кабинет директора",
+     "back": "",
+     "steps": [
+      {
+       "type": "photo",
+       "n": "72",
+       "fx": "fade"
+      },
+      {
+       "type": "say",
+       "text": "— Пока вроде никого....",
+       "who": "me",
+       "audio": "golos159.wav"
+      },
+      {
+       "type": "button",
+       "label": "Заглянуть в компьютер",
+       "align": "center",
+       "px": 50,
+       "py": 82,
+       "pos": "center"
+      },
+      {
+       "type": "computer",
+       "pass": "ХлопокВанЛав",
+       "secret": "Не люди управляют хлопком, а хлопок людьми!"
+      }
+     ]
+    },
+    {
+     "label": "Пойти на обед",
+     "back": "",
+     "steps": []
+    },
+    {
+     "label": "Прогуляться, все равно на обед уже не успеваю.",
+     "back": "",
+     "steps": [
+      {
+       "type": "photo",
+       "n": "71",
+       "fx": "fade"
+      },
+      {
+       "type": "say",
+       "text": "— Короче я такое узнал!",
+       "who": "npc",
+       "audio": "golos154.wav"
+      },
+      {
+       "type": "say",
+       "text": "— Что?",
+       "who": "npc",
+       "audio": "golos155.wav"
+      },
+      {
+       "type": "say",
+       "text": "— Я смог взломать компьютер директора и узнал, что не мы заправляем хлопком, а хлопок....",
+       "who": "npc",
+       "audio": "golos156.wav"
+      },
+      {
+       "type": "say",
+       "text": "— Попалась!",
+       "who": "npc",
+       "audio": "golos157.wav"
+      },
+      {
+       "type": "veil",
+       "to": "1"
+      }
+     ]
+    }
+   ],
+   "px": 50,
+   "py": 59
   }
  ]
 }
