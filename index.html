@@ -249,6 +249,21 @@ body.pv #exitpv{display:block}
 .rsv{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:6}
 .rsv path{fill:none;stroke:#000;stroke-width:6;stroke-linecap:round;animation:rf .28s ease-out forwards}
 @keyframes rf{from{opacity:1}to{opacity:0}}
+/* ===== окоп (побег) ===== */
+.ebg{position:absolute;inset:0;background:radial-gradient(circle at 50% 50%,#3a2615,#1f130a)}
+.ecv{position:absolute;inset:0}
+.egd{position:absolute;left:0;top:0;width:0;height:0;z-index:3;pointer-events:none}
+.egd i{position:absolute;left:-54px;top:-54px;width:108px;height:108px;border-radius:50%;background:radial-gradient(circle,rgba(255,235,140,.6),rgba(255,235,140,.18) 60%,transparent 70%)}
+.egd b{position:absolute;left:-20px;top:-22px;font-size:38px;line-height:1;font-weight:400}
+.epl{position:absolute;left:0;top:0;width:0;height:0;z-index:4;pointer-events:none;display:none}
+.epl b{position:absolute;left:-18px;top:-20px;font-size:34px;line-height:1;font-weight:400}
+.emk{position:absolute;z-index:2;transform:translate(-50%,-50%);font:700 12px system-ui,sans-serif;color:#fff;text-align:center;pointer-events:none;text-shadow:0 1px 3px #000}
+.emk em{display:block;font-style:normal;font-size:34px;line-height:1}
+.emk.pulse em{animation:cfp .9s ease-in-out infinite}
+.ebn{position:absolute;inset:0;z-index:7;display:flex;align-items:center;justify-content:center;text-align:center;padding:20px;font:900 38px system-ui,sans-serif;color:#fff;-webkit-text-stroke:4px rgba(0,0,0,.6);paint-order:stroke fill;opacity:0;transition:opacity .3s;pointer-events:none}
+.ebn.show{opacity:1}
+.ebn.bad{background:rgba(190,20,20,.45)}
+.ebn.good{background:rgba(30,160,70,.4)}
 </style>
 </head>
 <body>
@@ -809,6 +824,88 @@ function runRope(s){return mgRun((el,fin)=>{
   const iv=setInterval(()=>{spawn();if(Math.random()<.4)spawn()},650);
   MG.off=()=>{clearInterval(iv);timers.forEach(clearTimeout)};
 });}
+/* ---------- ОКОП: прокопать и сбежать (два исхода) ---------- */
+function runEscape(s){
+  let result=false;
+  return mgRun((el,fin)=>{
+    const W=el.clientWidth,H=el.clientHeight,clamp=(v,a,b)=>Math.max(a,Math.min(b,v)),dist=(a,b)=>Math.hypot(a.x-b.x,a.y-b.y);
+    const start={x:Math.round(W*.2),y:H-90},exit={x:Math.round(W*.8),y:130};
+    el.innerHTML='<div class="ebg"></div><canvas class="ecv"></canvas><div class="emk st"><em>🕳️</em>Старт</div><div class="emk ex"><em>🌳</em>Свобода</div><div class="mgt"></div><div class="epl"><b></b></div><div class="ebn"></div>';
+    const T=el.querySelector('.mgt'),cv=el.querySelector('canvas'),g=cv.getContext('2d',{willReadFrequently:true});
+    const pl=el.querySelector('.epl'),plb=pl.querySelector('b'),ban=el.querySelector('.ebn'),mkS=el.querySelector('.emk.st'),mkE=el.querySelector('.emk.ex');
+    mkS.style.left=start.x+'px';mkS.style.top=start.y+'px';mkE.style.left=exit.x+'px';mkE.style.top=exit.y+'px';
+    cv.width=W;cv.height=H;
+    const grad=g.createLinearGradient(0,0,0,H);grad.addColorStop(0,'#86603a');grad.addColorStop(1,'#68452a');
+    g.fillStyle=grad;g.fillRect(0,0,W,H);
+    for(let i=0;i<420;i++){g.fillStyle=Math.random()<.5?'rgba(255,230,190,'+(.05+Math.random()*.1)+')':'rgba(30,15,5,'+(.08+Math.random()*.14)+')';g.beginPath();g.ellipse(Math.random()*W,Math.random()*H,2+Math.random()*9,1+Math.random()*5,Math.random()*3,0,7);g.fill()}
+    g.globalCompositeOperation='destination-out';g.fillStyle='#000';
+    [start,exit].forEach(p=>{g.beginPath();g.arc(p.x,p.y,34,0,7);g.fill()});
+    g.lineCap='round';g.lineJoin='round';g.lineWidth=44;g.strokeStyle='#000';
+    const baseTitle=s.title||'Прокопай проход к свободе: води пальцем от «Старта»';
+    T.textContent=baseTitle;
+    /* охрана */
+    const NG=clamp(parseInt(s.guards)||3,1,4),SP=Math.max(.1,(parseFloat(s.speed)||100)/100);
+    const gs=[];
+    for(let i=0;i<NG;i++){
+      const y=exit.y+90+(start.y-90-(exit.y+90))*(i+.5)/NG;
+      const d=document.createElement('div');d.className='egd';d.innerHTML='<i></i><b>💂</b>';el.insertBefore(d,pl);
+      gs.push({el:d,b:d.querySelector('b'),y,x:0,v:(80+Math.random()*55)*SP,ph:Math.random()*2});
+    }
+    const range=W-60;
+    const place=t=>{gs.forEach(o=>{
+      const u=(t*o.v/range+o.ph)%2,right=u<1;o.x=30+(right?u:2-u)*range;
+      o.el.style.transform='translate('+o.x+'px,'+o.y+'px)';o.b.style.transform=right?'':'scaleX(-1)';
+    })};
+    /* игра */
+    let phase=1,down=false,last=null,tip={...start},P={...start};
+    const OFF=28;
+    const pt=e=>{const r=el.getBoundingClientRect();return{x:clamp(e.clientX-r.left,0,W),y:clamp(e.clientY-r.top-OFF,0,H)}};
+    const setPl=p=>{P=p;pl.style.transform='translate('+p.x+'px,'+p.y+'px)'};
+    const inCorr=p=>{const d=g.getImageData(clamp(p.x-5,0,W-11),clamp(p.y-5,0,H-11),11,11).data;for(let i=3;i<d.length;i+=4)if(d[i]<100)return true;return false};
+    const finish=(win,msg)=>{
+      if(phase===0)return;phase=0;down=false;result=win;
+      ban.textContent=msg;ban.className='ebn show '+(win?'good':'bad');
+      setTimeout(fin,1500);
+    };
+    const t0=performance.now();let raf=0;
+    const loop=now=>{
+      place((now-t0)/1000);
+      if(phase===3){for(const o of gs)if(dist(P,o)<38){finish(false,s.loseText||'Поймали!');break}}
+      raf=requestAnimationFrame(loop);
+    };
+    raf=requestAnimationFrame(loop);
+    MG.off=()=>cancelAnimationFrame(raf);
+    el.onpointerdown=e=>{
+      if(phase===0)return;e.preventDefault();try{el.setPointerCapture(e.pointerId)}catch(x){}
+      const p=pt(e);
+      if(phase===1){
+        if(dist(p,tip)<64){down=true;last=p;plb.textContent='⛏️';pl.style.display='block';setPl(p)}
+      }else if(phase===2){
+        if(dist(p,start)<64){phase=3;down=true;plb.textContent='😬';pl.style.display='block';setPl(p);T.textContent='Не отрывай палец! Не попадись охране';mkS.classList.remove('pulse')}
+      }
+    };
+    el.onpointermove=e=>{
+      if(!down||phase===0)return;
+      const p=pt(e);
+      if(phase===1){
+        g.beginPath();g.moveTo(last.x,last.y);g.lineTo(p.x,p.y);g.stroke();
+        last=p;tip=p;setPl(p);
+        if(dist(p,exit)<42){
+          phase=2;down=false;pl.style.display='none';
+          T.textContent='Проход готов! Нажми на «Старт» и ползи, не отрывая палец';mkS.classList.add('pulse');
+        }
+      }else if(phase===3){
+        setPl(p);
+        if(!inCorr(p))finish(false,s.loseText||'Поймали!');
+        else if(dist(p,exit)<40)finish(true,s.winText||'Побег удался!');
+      }
+    };
+    el.onpointerup=el.onpointercancel=()=>{
+      if(phase===3)finish(false,s.loseText||'Поймали!');
+      down=false;
+    };
+  }).then(()=>result);
+}
 /* ---------- ХЛОПКОВОЕ ПОЛЕ ---------- */
 function cfStop(){const P=$('cf');if(P){P.style.transition='none';P.style.opacity=0;P.style.display='none';P.style.transition=''}}
 function runCotton(s){
@@ -1125,6 +1222,7 @@ async function doStep(s,id){
   case 'mop':await runMop(s);break;
   case 'soup':await runSoup(s);break;
   case 'rope':await runRope(s);break;
+  case 'escape':{const ok=await runEscape(s);await runSteps((ok?s.win:s.lose)||[],id);break}
   case 'computer':await runComputer(s);break;
   case 'ending':{
     await fade(1,2500);await clearLines();
@@ -1182,7 +1280,7 @@ async function loadStory(){
   catch(e){st=JSON.parse(JSON.stringify(DEFAULT))}
   return st;
 }
-function preload(steps){steps.forEach(s=>{if(s.cards)preload(s.cards);if(s.then)preload(s.then);if(s.else)preload(s.else);if(s.type==='photo'||s.type==='card')new Image().src=PHOTO_DIR+'foto'+(+s.n)+'.jpg';(s.options||[]).forEach(o=>preload(o.steps||[]))})}
+function preload(steps){steps.forEach(s=>{if(s.cards)preload(s.cards);if(s.then)preload(s.then);if(s.else)preload(s.else);if(s.win)preload(s.win);if(s.lose)preload(s.lose);if(s.type==='photo'||s.type==='card')new Image().src=PHOTO_DIR+'foto'+(+s.n)+'.jpg';(s.options||[]).forEach(o=>preload(o.steps||[]))})}
 
 /* ---------- РЕДАКТОР (открывается по адресу ...?edit) ---------- */
 const h=(t,c,x)=>{const e=document.createElement(t);if(c)e.className=c;if(x!=null)e.textContent=x;return e};
@@ -1206,6 +1304,7 @@ const TYPES={
  notice:{name:'🔖 Надпись в овале',f:[['text','Текст','text'],['sec','Сколько секунд показывать (по умолчанию 2.6)','num'],['wait','После надписи','sel',[['1','Подождать, пока исчезнет'],['0','Сразу идти дальше']]]],d:()=>({type:'notice',text:'',wait:'1'})},
  mop:{name:'🧹 Уборщица',f:[['title','Надпись сверху','text'],['done','Надпись, когда пол чистый','text']],d:()=>({type:'mop',title:'Помой пол!',done:'Пол сияет!'})},
  soup:{name:'🍲 Поварёшка (суп)',f:[['done','Надпись, когда суп готов','text']],d:()=>({type:'soup',done:'Суп готов!'})},
+ escape:{name:'🕳 Окоп (побег)',f:[['title','Подсказка сверху (пусто — стандартная)','text'],['guards','Сколько охранников (1–4, по умолчанию 3)','num'],['speed','Скорость охраны в % (100 — обычная)','num'],['winText','Надпись при удавшемся побеге','text'],['loseText','Надпись, когда поймали','text']],d:()=>({type:'escape',title:'',guards:'3',speed:'100',winText:'Побег удался!',loseText:'Поймали!',win:[],lose:[]})},
  rope:{name:'🪢 Чёрная верёвка',f:[['title','Надпись сверху','text'],['count','Сколько теней прогнать (по умолчанию 12)','num'],['done','Надпись в конце','text']],d:()=>({type:'rope',title:'Прогони тени!',count:'12',done:'Теней больше нет'})},
  cotton:{name:'🌾 Хлопковое поле',f:[['title','Надпись сверху','text'],['emoji','Эмодзи на квадратиках (хлопок)','text'],['done','Надпись, когда всё собрано','text'],['meter','Шкала, которая растёт за каждый собранный хлопок (необязательно, название шкалы)','text'],['per','На сколько процентов за каждый','num']],d:()=>({type:'cotton',title:'Собери хлопок!',emoji:'☁️',done:'Весь хлопок собран!',meter:'',per:'0'})},
  computer:{name:'💻 Компьютер',f:[['pass','Пароль для папки «Засекречено»','text'],['secret','Что показать внутри «Засекречено» после ввода пароля','area']],d:()=>({type:'computer',pass:'ХлопокВанЛав',secret:'Здесь пока пусто. Но скоро здесь что-то появится.'})},
@@ -1244,6 +1343,7 @@ function renderList(steps,parent,top,kinds){
       const add=h('button','add','+ Ещё вариант');add.onclick=()=>{s.options.push({label:'',back:'',steps:[]});changed();redraw()};c.append(add);
     }
     if(s.type==='ending'){s.cards=s.cards||[];c.append(h('div','sub','Фотографии на столе — по порядку, каждая ложится на предыдущую (нужен вид «Фотографии на столе»):'));const n=h('div','nest');renderList(s.cards,n,false,['card']);c.append(n)}
+    if(s.type==='escape'){[['win','Если побег удался (успели сбежать):'],['lose','Если поймали:']].forEach(([k,l])=>{s[k]=s[k]||[];c.append(h('div','sub',l));const n=h('div','nest');renderList(s[k],n,false);c.append(n)})}
     if(s.type==='if'){[['then','Тогда:'],['else','Иначе (необязательно):']].forEach(([k,l])=>{s[k]=s[k]||[];c.append(h('div','sub',l));const n=h('div','nest');renderList(s[k],n,false);c.append(n)})}
     parent.append(c);
   });
